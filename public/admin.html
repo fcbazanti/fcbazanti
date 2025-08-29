@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin – FC Bažanti</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <section class="card">
+      <h2>Administrace</h2>
+      <p class="notice">Pro vstup zadejte heslo. (výchozí: <strong>bazant</strong> – nastavuje se v <code>.env</code>)</p>
+
+      <div id="loginBox">
+        <label for="password">Heslo</label>
+        <input id="password" type="password" placeholder="••••••" />
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button id="loginBtn">Přihlásit</button>
+        </div>
+        <div id="loginMsg" style="margin-top:10px;"></div>
+      </div>
+
+      <div id="adminArea" style="display:none;">
+        <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
+          <h3>Všechny rezervace</h3>
+          <button id="logoutBtn" class="secondary">Odhlásit</button>
+        </div>
+        <table class="table" id="rezTable" style="margin-top:10px;">
+          <thead>
+            <tr><th>ID</th><th>Třída</th><th>Jméno</th><th>E‑mail</th><th>Vytvořeno</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
