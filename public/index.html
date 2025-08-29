@@ -1,111 +1,34 @@
-<!doctype html>
-<html lang="cs">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FC Bažantnice – Kontakt & Rezervace</title>
-  <link rel="stylesheet" href="/style.css" />
-  <meta name="description" content="FC Bažantnice – kontakt, ceník, rezervace a kalendář zápasů na příští měsíc." />
-</head>
-<body>
-  <div class="container">
-    <header class="header">
-      <img src="/logo.png" onerror="this.src='https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=300&auto=format&fit=crop'" alt="FC Bažantnice" class="logo" />
-      <div>
-        <h1 style="margin:4px 0 2px;">FC Bažantnice</h1>
-        <div class="notice">Kontakt • Rezervace • Kalendář • Ceník</div>
-      </div>
-    </header>
-
-    <div class="card" style="margin-top:16px;">
-      <nav class="tabs" id="tabs">
-        <div class="tab active" data-tab="uvod">Úvod</div>
-        <div class="tab" data-tab="kontakt">Kontakt</div>
-        <div class="tab" data-tab="rezervace">Rezervace</div>
-        <div class="tab" data-tab="kalendar">Kalendář</div>
-        <div class="tab" data-tab="cenik">Ceník</div>
-        <a href="/admin.html" class="tab" style="text-decoration:none;">Admin</a>
-      </nav>
-
-      <section id="tab-uvod" class="tab-content active">
-        <h2>Vítejte</h2>
-        <p>Oficiální stránka klubu Fc Bažantnice. Sídlíme v Malé Hraštici, kde máme stadion. Pokud byste měli chuť a čas se přijít podívat na zápas zarezervujte se. Naším cílem je si vydělat na dresy, tak se nebojte nás podpořit. Pokud chcete zakoupit permanentku tak nás kontaktujte. </p>
-        <div class="grid grid-2" style="margin-top:12px;">
-          <img src="/stadium.png" alt="Stadion" style="width:100%; border-radius:12px;"/>
-          <img src="/logo.png" alt="Logo" style="width:100%; border-radius:12px; background:#e2e8f0; padding:12px;"/>
-        </div>
-      </section>
-
-      <section id="tab-kontakt" class="tab-content">
-        <h2>Kontakt</h2>
-        <div class="grid grid-2" style="margin-top:12px;">
-          <div>
-            <h3 style="margin:0 0 6px;">FC Bažantnice</h3>
-            <div>Malá Hraštice 324, ČR</div>
-            <div style="margin-top:6px;">Tel.: <a href="tel:+420605489105">+420 605 489 105</a></div>
-            <div>E-mail: <a href="mailto:fcbazantnice@gmail.com">fcbazantnice@gmail.com</a></div>
-          </div>
-          <div style="position:relative; overflow:hidden; border-radius:12px;">
-            <iframe style="width:100%; height:300px; border:0;" loading="lazy" allowfullscreen
-                    referrerpolicy="no-referrer-when-downgrade"
-                    src="https://www.google.com/maps?q=Mal%C3%A1%20Hra%C5%A1tice%20324%2C%20%C4%8CR&output=embed"></iframe>
-          </div>
-        </div>
-      </section>
-
-      <section id="tab-rezervace" class="tab-content">
-        <h2>Rezervace</h2>
-        <p class="notice">Vyberte třídu sezení, vyplňte jméno a e-mail.</p>
-        <div id="msg"></div>
-        <form id="bookForm">
-          <div class="grid grid-2">
-            <div>
-              <label for="class">Třída</label>
-              <select id="class" name="class" required>
-                <option value="1. třída">1. třída (80 Kč za zápas)</option>
-                <option value="2. třída">2. třída (35 Kč za zápas)</option>
-                <option value="3. třída">3. třída (20 Kč za zápas)</option>
-              </select>
-              <div id="priceHint" class="notice" style="margin-top:6px;"></div>
-            </div>
-            <div>
-              <label for="name">Jméno</label>
-              <input id="name" name="name" placeholder="Jan Novák" required />
-            </div>
-          </div>
-          <label for="email">E-mail</label>
-          <input id="email" name="email" placeholder="jan.novak@example.com" required type="email" />
-
-          <div style="display:flex; gap:10px; margin-top:12px;">
-            <button type="submit">Odeslat rezervaci</button>
-            <a href="/admin.html"><button type="button" class="secondary">Admin</button></a>
-          </div>
-        </form>
-      </section>
-
-      <section id="tab-kalendar" class="tab-content">
-        <h2>Kalendář – příští měsíc</h2>
-        <div id="upcoming" class="grid" style="gap:8px;"></div>
-        <p class="notice">Zde budou zobrazeny.</p>
-      </section>
-
-      <section id="tab-cenik" class="tab-content">
-        <h2>Ceník tříd</h2>
-        <table class="table">
-          <thead>
-            <tr><th>Třída</th><th>Na zápas</th><th>Permanentka</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><span class="badge">1. třída</span></td><td>80 Kč</td><td>1000 Kč</td></tr>
-            <tr><td><span class="badge">2. třída</span></td><td>35 Kč</td><td>500 Kč</td></tr>
-            <tr><td><span class="badge">3. třída</span></td><td>20 Kč</td><td>250 Kč</td></tr>
-          </tbody>
-        </table>
-      </section>
+<section id="tab-rezervace" class="tab-content">
+  <h2>Rezervace</h2>
+  <p class="notice">Vyberte zápas, třídu sezení, vyplňte jméno a e-mail.</p>
+  <div id="msg"></div>
+  <form id="bookForm">
+    <label for="match">Zápas</label>
+    <select id="match" name="match" required></select>
+    <div class="notice" style="margin:6px 0;">
+      <span style="color:green;">● zelená</span> = volno,
+      <span style="color:red;">● červená</span> = plno
     </div>
+    <div class="grid grid-2">
+      <div>
+        <label for="class">Třída</label>
+        <select id="class" name="class" required>
+          <option value="1. třída">1. třída (80 Kč za zápas)</option>
+          <option value="2. třída">2. třída (35 Kč za zápas)</option>
+          <option value="3. třída">3. třída (20 Kč za zápas)</option>
+        </select>
+        <div id="priceHint" class="notice" style="margin-top:6px;"></div>
+      </div>
+      <div>
+        <label for="name">Jméno</label>
+        <input id="name" name="name" placeholder="Jan Novák" required />
+      </div>
+    </div>
+    <label for="email">E-mail</label>
+    <input id="email" name="email" placeholder="jan.novak@example.com" required type="email" />
 
-    <footer class="footer">© <span id="year"></span> FC Bažantnice • <a href="/admin.html">Administrace</a></footer>
-  </div>
-  <script src="/app.js"></script>
-</body>
-</html>
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button type="submit">Odeslat rezervaci</button>
+    </div>
+  </form>
+</section>
