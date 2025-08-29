@@ -1,12 +1,13 @@
 const $ = (sel) => document.querySelector(sel);
 
 const msg = (el, type, text) => {
-  el.innerHTML = <div class="${type}">${text}</div>;
+  el.innerHTML = `<div class="${type}">${text}</div>`;
 };
 
 const y = document.getElementById('year');
 if (y) y.textContent = new Date().getFullYear();
 
+// Tabs
 const tabs = document.querySelectorAll('.tab');
 const contents = document.querySelectorAll('.tab-content');
 
@@ -15,12 +16,19 @@ if (tabs.length) {
     t.addEventListener('click', () => {
       const target = t.getAttribute('data-tab');
       if (!target) return;
+
       tabs.forEach(x => x.classList.remove('active'));
       t.classList.add('active');
+
       contents.forEach(c => c.classList.remove('active'));
-      const el = document.getElementById(tab-${target});
+
+      const el = document.getElementById(`tab-${target}`);
       if (el) el.classList.add('active');
-      document.getElementById('tabs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      document.getElementById('tabs').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
     });
   });
 }
@@ -46,12 +54,15 @@ if (classSelect && priceHint) {
 
 // Odeslání rezervace
 const form = document.getElementById('bookForm');
-
 if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const data = { class: form.class.value, name: form.name.value, email: form.email.value };
+    const data = {
+      class: form.class.value,
+      name: form.name.value,
+      email: form.email.value
+    };
 
     const msgEl = document.getElementById('msg');
     msg(msgEl, 'notice', 'Odesílám…');
@@ -62,9 +73,10 @@ if (form) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+
       const j = await res.json();
       if (j.ok) {
-        msg(msgEl, 'success', Hotovo! ID rezervace: ${j.id}.);
+        msg(msgEl, 'success', `Hotovo! ID rezervace: ${j.id}.`);
         form.reset();
       } else {
         msg(msgEl, 'error', j.error || 'Něco se nepovedlo.');
@@ -77,25 +89,27 @@ if (form) {
 
 // Veřejný kalendář – příští měsíc
 const upcomingBox = document.getElementById('upcoming');
-
 if (upcomingBox) {
   (async () => {
     try {
       const res = await fetch('/api/matches/upcoming');
       const j = await res.json();
+
       if (!j.ok) return;
       if (!j.matches.length) {
         upcomingBox.innerHTML = '<div class="notice">Zatím žádné zápasy pro příští měsíc.</div>';
         return;
       }
+
       upcomingBox.innerHTML = '';
       j.matches.forEach(m => {
         const d = new Date(m.date + 'T00:00:00');
         const item = document.createElement('div');
         item.className = 'card';
-        item.innerHTML = <strong>${d.toLocaleDateString()}</strong><br>${m.title};
+        item.innerHTML = `<strong>${d.toLocaleDateString()}</strong><br>${m.title}`;
         upcomingBox.appendChild(item);
       });
+
     } catch (e) {
       upcomingBox.innerHTML = '<div class="notice">Nelze načíst kalendář.</div>';
     }
@@ -104,7 +118,6 @@ if (upcomingBox) {
 
 // Admin
 const loginBtn = document.getElementById('loginBtn');
-
 if (loginBtn) {
   const loginBox = document.getElementById('loginBox');
   const adminArea = document.getElementById('adminArea');
@@ -120,10 +133,18 @@ if (loginBtn) {
       msg(loginMsg, 'error', j.error || 'Nelze načíst rezervace.');
       return;
     }
+
     rezTbody.innerHTML = '';
     j.reservations.forEach(r => {
       const tr = document.createElement('tr');
-      tr.innerHTML = <td>${r.id}</td><td>${r.class}</td><td>${r.name}</td><td>${r.email}</td><td>${new Date(r.created_at).toLocaleString()}</td><td><button data-id="${r.id}" class="secondary del-rez">Smazat</button></td>;
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${r.class}</td>
+        <td>${r.name}</td>
+        <td>${r.email}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+        <td><button data-id="${r.id}" class="secondary del-rez">Smazat</button></td>
+      `;
       rezTbody.appendChild(tr);
     });
   }
@@ -135,11 +156,16 @@ if (loginBtn) {
       msg(mMsg, 'error', j.error || 'Nelze načíst zápasy.');
       return;
     }
+
     matchTbody.innerHTML = '';
     j.matches.forEach(m => {
       const d = new Date(m.date + 'T00:00:00');
       const tr = document.createElement('tr');
-      tr.innerHTML = <td>${d.toLocaleDateString()}</td><td>${m.title}</td><td><button data-id="${m.id}" class="secondary del-match">Smazat</button></td>;
+      tr.innerHTML = `
+        <td>${d.toLocaleDateString()}</td>
+        <td>${m.title}</td>
+        <td><button data-id="${m.id}" class="secondary del-match">Smazat</button></td>
+      `;
       matchTbody.appendChild(tr);
     });
   }
@@ -151,6 +177,7 @@ if (loginBtn) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password })
     });
+
     const j = await res.json();
     if (j.ok) {
       loginBox.style.display = 'none';
@@ -170,16 +197,17 @@ if (loginBtn) {
   document.addEventListener('click', async (e) => {
     if (e.target.classList.contains('del-rez')) {
       const id = e.target.getAttribute('data-id');
-      if (confirm(Smazat rezervaci #${id}?)) {
-        const res = await fetch(/api/reservations/${id}, { method: 'DELETE' });
+      if (confirm(`Smazat rezervaci #${id}?`)) {
+        const res = await fetch(`/api/reservations/${id}`, { method: 'DELETE' });
         const j = await res.json();
         if (j.ok) await loadReservations();
       }
     }
+
     if (e.target.classList.contains('del-match')) {
       const id = e.target.getAttribute('data-id');
-      if (confirm(Smazat zápas #${id}?)) {
-        const res = await fetch(/api/matches/${id}, { method: 'DELETE' });
+      if (confirm(`Smazat zápas #${id}?`)) {
+        const res = await fetch(`/api/matches/${id}`, { method: 'DELETE' });
         const j = await res.json();
         if (j.ok) await loadMatches();
       }
@@ -189,13 +217,16 @@ if (loginBtn) {
   const matchForm = document.getElementById('matchForm');
   matchForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const title = document.getElementById('mTitle').value;
     const date = document.getElementById('mDate').value;
+
     const res = await fetch('/api/matches', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, date })
     });
+
     const j = await res.json();
     if (j.ok) {
       msg(mMsg, 'success', 'Zápas přidán.');
