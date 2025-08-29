@@ -1,7 +1,7 @@
 {
   "name": "fcbazanti",
-  "version": "1.0.0",
-  "description": "Jednoduchý rezervační web pro FC Bažanti",
+  "version": "1.1.0",
+  "description": "Rezervace + kalendář zápasů pro FC Bažantnice",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -18,5 +18,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18 <22"
   }
 }
