@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FC Bažanti – Kontakt & Rezervace</title>
+  <title>FC Bažantnice – Kontakt & Rezervace</title>
   <link rel="stylesheet" href="/style.css" />
-  <meta name="description" content="FC Bažanti Bažantnice – kontakt, ceník a jednoduché rezervace. Žádný e‑shop, jen kalendář a formulář." />
+  <meta name="description" content="FC Bažantnice – kontakt, ceník, rezervace a kalendář zápasů na příští měsíc." />
 </head>
 <body>
   <div class="container">
     <header class="header">
-      <img src="https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=300&auto=format&fit=crop" alt="FC Bažanti" class="logo" />
+      <img src="/logo.png" onerror="this.src='https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=300&auto=format&fit=crop'" alt="FC Bažantnice" class="logo" />
       <div>
-        <h1 style="margin:4px 0 2px;">FC Bažanti Bažantnice</h1>
-        <div class="notice">Oficiální stránka – Kontakt • Rezervace • Kalendář • Ceník</div>
+        <h1 style="margin:4px 0 2px;">FC Bažantnice</h1>
+        <div class="notice">Kontakt • Rezervace • Kalendář • Ceník</div>
       </div>
     </header>
 
@@ -28,62 +28,52 @@
       </nav>
 
       <section id="tab-uvod" class="tab-content active">
-        <h2>Vítejte v FC Bažanti</h2>
-        <p>
-          Jsme amatérský fotbalový klub z Bažantnice. Přijďte si s námi zatrénovat, podívat se na zápas
-          nebo se rovnou přihlásit do jedné z našich tříd (U7, U9, U11, Muži A/B). Tohle je jednoduchá verze webu
-          bez e‑shopu – najdete tu kontakt, kalendář akcí a formulář na rezervace.
-        </p>
+        <h2>Vítejte</h2>
+        <p>Oficiální stránka klubu. Vyberte si třídu sezení pro zápas, proveďte rezervaci, a projděte si kalendář zápasů na příští měsíc.</p>
         <div class="grid grid-2" style="margin-top:12px;">
-          <img src="https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?q=80&w=600&auto=format&fit=crop" alt="Hřiště" style="width:100%; border-radius:12px;"/>
-          <img src="https://images.unsplash.com/photo-1431329842981-4336207f6533?q=80&w=600&auto=format&fit=crop" alt="Tým" style="width:100%; border-radius:12px;"/>
+          <img src="/stadium.png" alt="Stadion" style="width:100%; border-radius:12px;"/>
+          <img src="/logo.png" alt="Logo" style="width:100%; border-radius:12px; background:#e2e8f0; padding:12px;"/>
         </div>
       </section>
 
       <section id="tab-kontakt" class="tab-content">
         <h2>Kontakt</h2>
-        <p>Pro dotazy a přihlášky nás kontaktujte:</p>
         <div class="grid grid-2" style="margin-top:12px;">
           <div>
-            <h3 style="margin:0 0 6px;">FC Bažanti Bažantnice</h3>
-            <div>Nová Ves pod Pleší – Bažantnice</div>
-            <div style="margin-top:6px;">Tel.: +420&nbsp;—</div>
-            <div>E‑mail: —</div>
-            <div style="margin-top:6px;">Facebook: @facebookovástránka</div>
+            <h3 style="margin:0 0 6px;">FC Bažantnice</h3>
+            <div>Malá Hraštice 324, ČR</div>
+            <div style="margin-top:6px;">Tel.: <a href="tel:+420605489105">+420 605 489 105</a></div>
+            <div>E-mail: <a href="mailto:fcbazanti@gmail.com">fcbazanti@gmail.com</a></div>
           </div>
           <div style="position:relative; overflow:hidden; border-radius:12px;">
-            <iframe
-              style="width:100%; height:300px; border:0;"
-              loading="lazy"
-              allowfullscreen
-              referrerpolicy="no-referrer-when-downgrade"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2565.642969271049!2d14.233!3d49.836!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDnCsDUwJzA5LjYiTiAxNMKwMTMnNTguOCJF!5e0!3m2!1scs!2scz!4v0000000000000"></iframe>
+            <iframe style="width:100%; height:300px; border:0;" loading="lazy" allowfullscreen
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://www.google.com/maps?q=Mal%C3%A1%20Hra%C5%A1tice%20324%2C%20%C4%8CR&output=embed"></iframe>
           </div>
         </div>
       </section>
 
       <section id="tab-rezervace" class="tab-content">
         <h2>Rezervace</h2>
-        <p class="notice">Vyberte třídu, vyplňte jméno a e‑mail. Zpráva dorazí do administrace (heslo <code>bazant</code>).</p>
+        <p class="notice">Vyberte třídu sezení, vyplňte jméno a e-mail. Rezervace se uloží do administrace (heslo <code>bazant</code>).</p>
         <div id="msg"></div>
         <form id="bookForm">
           <div class="grid grid-2">
             <div>
               <label for="class">Třída</label>
               <select id="class" name="class" required>
-                <option value="U7">U7</option>
-                <option value="U9">U9</option>
-                <option value="U11">U11</option>
-                <option value="Muži A">Muži A</option>
-                <option value="Muži B">Muži B</option>
+                <option value="1. třída">1. třída (80 Kč / zápas, perm. 1000 Kč)</option>
+                <option value="2. třída">2. třída (35 Kč / zápas, perm. 500 Kč)</option>
+                <option value="3. třída">3. třída (20 Kč / zápas, perm. 250 Kč)</option>
               </select>
+              <div id="priceHint" class="notice" style="margin-top:6px;"></div>
             </div>
             <div>
               <label for="name">Jméno</label>
               <input id="name" name="name" placeholder="Jan Novák" required />
             </div>
           </div>
-          <label for="email">E‑mail</label>
+          <label for="email">E-mail</label>
           <input id="email" name="email" placeholder="jan.novak@example.com" required type="email" />
 
           <div style="display:flex; gap:10px; margin-top:12px;">
@@ -94,31 +84,27 @@
       </section>
 
       <section id="tab-kalendar" class="tab-content">
-        <h2>Kalendář</h2>
-        <p class="notice">Spravujte ho ve svém Google Kalendáři (veřejný), tady se jen zobrazuje.</p>
-        <div style="position:relative; overflow:hidden; border-radius:12px;">
-          <iframe style="width:100%; height:600px; border:0;" src="https://calendar.google.com/calendar/embed?src=en.usa%23holiday%40group.v.calendar.google.com&ctz=Europe%2FPrague" loading="lazy"></iframe>
-        </div>
+        <h2>Kalendář – příští měsíc</h2>
+        <div id="upcoming" class="grid" style="gap:8px;"></div>
+        <p class="notice">Kalendář spravujete v administraci (přidáním zápasu s datem a názvem).</p>
       </section>
 
       <section id="tab-cenik" class="tab-content">
-        <h2>Ceník</h2>
+        <h2>Ceník tříd</h2>
         <table class="table">
           <thead>
-            <tr><th>Třída</th><th>Popis</th><th>Cena</th></tr>
+            <tr><th>Třída</th><th>Na zápas</th><th>Permanentka</th></tr>
           </thead>
           <tbody>
-            <tr><td><span class="badge">U7</span></td><td>mladší přípravka</td><td>500 Kč / měsíc</td></tr>
-            <tr><td><span class="badge">U9</span></td><td>přípravka</td><td>600 Kč / měsíc</td></tr>
-            <tr><td><span class="badge">U11</span></td><td>mladší žáci</td><td>700 Kč / měsíc</td></tr>
-            <tr><td><span class="badge">Muži A</span></td><td>hlavní tým</td><td>1 200 Kč / měsíc</td></tr>
-            <tr><td><span class="badge">Muži B</span></td><td>rezervní tým</td><td>900 Kč / měsíc</td></tr>
+            <tr><td><span class="badge">1. třída</span></td><td>80 Kč</td><td>1000 Kč</td></tr>
+            <tr><td><span class="badge">2. třída</span></td><td>35 Kč</td><td>500 Kč</td></tr>
+            <tr><td><span class="badge">3. třída</span></td><td>20 Kč</td><td>250 Kč</td></tr>
           </tbody>
         </table>
       </section>
     </div>
 
-    <footer class="footer">© <span id="year"></span> FC Bažanti • <a href="/admin.html">Administrace</a></footer>
+    <footer class="footer">© <span id="year"></span> FC Bažantnice • <a href="/admin.html">Administrace</a></footer>
   </div>
   <script src="/app.js"></script>
 </body>
