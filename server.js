@@ -24,7 +24,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'change_me',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 8 }
+  cookie: { 
+    maxAge: 1000 * 60 * 60 * 8,
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production'
+  }
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -39,7 +44,9 @@ let db;
       class TEXT NOT NULL,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      match_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (match_id) REFERENCES matches(id)
     );
   `);
 
@@ -48,22 +55,38 @@ let db;
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       date TEXT NOT NULL, -- YYYY-MM-DD
+      time TEXT NOT NULL, -- HH:MM
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  app.listen(PORT, () => { console.log(`Server běží na http://localhost:${PORT}`); });
 })();
+
+const CAPACITY = { "1. třída": 5, "2. třída": 5, "3. třída": 10 };
 
 // Rezervace
 app.post('/api/book', async (req, res) => {
   try {
-    const { class: selectedClass, name, email } = req.body;
-    if (!selectedClass || !name || !email) {
-      return res.status(400).json({ ok: false, error: 'Vyplňte třídu, jméno i e-mail.' });
+    const { class: selectedClass, name, email, match_id } = req.body;
+    if (!selectedClass || !name || !email || !match_id) {
+      return res.status(400).json({ ok: false, error: 'Vyplňte všechny údaje.' });
     }
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRe.test(email)) return res.status(400).json({ ok: false, error: 'Zadejte platný e-mail.' });
 
-    const stmt = await db.run('INSERT INTO reservations (class, name, email) VALUES (?, ?, ?)', [selectedClass, name.trim(), email.trim().toLowerCase()]);
+    const count = await db.get(
+      'SELECT COUNT(*) as c FROM reservations WHERE match_id = ? AND class = ?',
+      [match_id, selectedClass]
+    );
+    if (count.c >= CAPACITY[selectedClass]) {
+      return res.status(400).json({ ok: false, error: 'Kapacita této třídy pro vybraný zápas je plná.' });
+    }
+
+    const stmt = await db.run(
+      'INSERT INTO reservations (class, name, email, match_id) VALUES (?, ?, ?, ?)',
+      [selectedClass, name.trim(), email.trim().toLowerCase(), match_id]
+    );
     res.json({ ok: true, id: stmt.lastID });
   } catch (e) {
     console.error(e);
@@ -84,7 +107,12 @@ function requireAdmin(req, res, next) { if (req.session?.isAdmin) return next();
 // Admin: výpis rezervací
 app.get('/api/reservations', requireAdmin, async (req, res) => {
   try {
-    const rows = await db.all('SELECT * FROM reservations ORDER BY created_at DESC');
+    const rows = await db.all(`
+      SELECT r.*, m.title, m.date, m.time 
+      FROM reservations r
+      JOIN matches m ON r.match_id = m.id
+      ORDER BY r.created_at DESC
+    `);
     res.json({ ok: true, reservations: rows });
   } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nepodařilo se načíst rezervace.' }); }
 });
@@ -94,26 +122,23 @@ app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
   catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Smazání se nepodařilo.' }); }
 });
 
-// === ZÁPASY (kalendář) ===
-// Přidání zápasu (admin)
+// === ZÁPASY ===
 app.post('/api/matches', requireAdmin, async (req, res) => {
   try {
-    const { title, date } = req.body; // date: YYYY-MM-DD
-    if (!title || !date) return res.status(400).json({ ok: false, error: 'Vyplňte název a datum.' });
-    const stmt = await db.run('INSERT INTO matches (title, date) VALUES (?, ?)', [title.trim(), date]);
+    const { title, date, time } = req.body;
+    if (!title || !date || !time) return res.status(400).json({ ok: false, error: 'Vyplňte název, datum a čas.' });
+    const stmt = await db.run('INSERT INTO matches (title, date, time) VALUES (?, ?, ?)', [title.trim(), date, time]);
     res.json({ ok: true, id: stmt.lastID });
   } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nelze uložit zápas.' }); }
 });
 
-// Seznam všech zápasů (admin)
 app.get('/api/matches', requireAdmin, async (req, res) => {
   try {
-    const rows = await db.all('SELECT * FROM matches ORDER BY date DESC, id DESC');
+    const rows = await db.all('SELECT * FROM matches ORDER BY date DESC, time DESC, id DESC');
     res.json({ ok: true, matches: rows });
   } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nelze načíst zápasy.' }); }
 });
 
-// Smazání zápasu (admin)
 app.delete('/api/matches/:id', requireAdmin, async (req, res) => {
   try { await db.run('DELETE FROM matches WHERE id = ?', [req.params.id]); res.json({ ok: true }); }
   catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Smazání se nepodařilo.' }); }
@@ -127,9 +152,21 @@ app.get('/api/matches/upcoming', async (req, res) => {
     const end = new Date(now.getFullYear(), now.getMonth() + 2, 1);
     const startStr = start.toISOString().slice(0,10);
     const endStr = end.toISOString().slice(0,10);
-    const rows = await db.all('SELECT * FROM matches WHERE date >= ? AND date < ? ORDER BY date ASC', [startStr, endStr]);
-    res.json({ ok: true, matches: rows, month: start.getMonth() + 1, year: start.getFullYear() });
+    const rows = await db.all(
+      'SELECT * FROM matches WHERE date >= ? AND date < ? ORDER BY date ASC, time ASC',
+      [startStr, endStr]
+    );
+
+    const matches = [];
+    for (const m of rows) {
+      const counts = {};
+      for (const cls of Object.keys(CAPACITY)) {
+        const row = await db.get('SELECT COUNT(*) as c FROM reservations WHERE match_id = ? AND class = ?', [m.id, cls]);
+        counts[cls] = row.c;
+      }
+      matches.push({ ...m, capacity: counts });
+    }
+
+    res.json({ ok: true, matches, month: start.getMonth() + 1, year: start.getFullYear() });
   } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nelze načíst kalendář.' }); }
 });
-
-app.listen(PORT, () => { console.log(`Server běží na http://localhost:${PORT}`); });
