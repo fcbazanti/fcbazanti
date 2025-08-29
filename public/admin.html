@@ -1,19 +1,64 @@
-<form id="matchForm" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; align-items:end;">
-  <div>
-    <label for="mTitle">Název zápasu</label>
-    <input id="mTitle" placeholder="FC Bažantnice vs. XYZ" required/>
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin – FC Bažantnice</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container">
+    <section class="card">
+      <h2>Administrace</h2>
+      <p class="notice">Zadejte heslo .</p>
+
+      <div id="loginBox">
+        <label for="password">Heslo</label>
+        <input id="password" type="password" placeholder="••••••" />
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button id="loginBtn">Přihlásit</button>
+        </div>
+        <div id="loginMsg" style="margin-top:10px;"></div>
+      </div>
+
+      <div id="adminArea" style="display:none;">
+        <div style="display:flex; gap:8px; align-items:center; justify-content:space-between;">
+          <h3>Vítej v administraci</h3>
+          <button id="logoutBtn" class="secondary">Odhlásit</button>
+        </div>
+
+        <div class="flex" style="margin-top:12px;">
+          <div class="col card" style="padding:16px;">
+            <h3>Rezervace</h3>
+            <table class="table" id="rezTable" style="margin-top:10px;">
+              <thead><tr><th>ID</th><th>Třída</th><th>Jméno</th><th>E-mail</th><th>Vytvořeno</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="col card" style="padding:16px;">
+            <h3>Kalendář zápasů</h3>
+            <div id="mMsg"></div>
+            <form id="matchForm" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-items:end;">
+              <div>
+                <label for="mTitle">Název zápasu</label>
+                <input id="mTitle" placeholder="FC Bažantnice vs. XYZ" required/>
+              </div>
+              <div>
+                <label for="mDate">Datum</label>
+                <input id="mDate" type="date" required />
+              </div>
+              <button type="submit">Přidat zápas</button>
+            </form>
+            <table class="table" id="matchTable" style="margin-top:10px;">
+              <thead><tr><th>Datum</th><th>Název</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
-  <div>
-    <label for="mDate">Datum</label>
-    <input id="mDate" type="date" required />
-  </div>
-  <div>
-    <label for="mTime">Čas</label>
-    <input id="mTime" type="time" required />
-  </div>
-  <button type="submit">Přidat zápas</button>
-</form>
-<table class="table" id="matchTable" style="margin-top:10px;">
-  <thead><tr><th>Datum</th><th>Čas</th><th>Název</th><th></th></tr></thead>
-  <tbody></tbody>
-</table>
+  <script src="/app.js"></script>
+</body>
+</html>
