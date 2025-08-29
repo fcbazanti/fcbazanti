@@ -30,7 +30,3 @@ button.secondary { background:#64748b; }
 /* Admin rozložení */
 .flex { display:flex; gap:16px; flex-wrap:wrap; }
 .col { flex:1 1 420px; }
-
-/* Nové styly pro zápasy v selectu */
-select option.green { color: green; }
-select option.red { color: red; }
