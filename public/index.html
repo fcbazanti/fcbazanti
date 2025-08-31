@@ -79,26 +79,6 @@
           <div style="display:flex; gap:10px; margin-top:12px;">
             <button type="submit">Odeslat rezervaci</button>
             <a href="/admin.html"><button type="button" class="secondary">Admin</button></a>
-            <!-- dej někam pod formulář rezervace -->
-<button id="payBtn" style="display:none">Zaplatit</button>
-
-<script>
-  // Tuhle funkci zavolej ve chvíli, kdy je rezervace vytvořená
-  // (tj. máš její ID a zvolenou třídu). Obvykle po odpovědi z /api/reservations.
-  function onReservationCreated(id, seatClass) {
-    window.__rid = id;
-    window.__seatClass = seatClass; // "1.trida" | "2.trida" | "3.trida"
-    document.getElementById('payBtn').style.display = 'inline-block';
-  }
-
-  // Klik na "Zaplatit" => jeden link podle třídy
-  document.getElementById('payBtn').addEventListener('click', function () {
-    if (!window.__rid || !window.__seatClass) return alert('Chybí ID rezervace.');
-    const map = { "1.trida": "1trida", "2.trida": "2trida", "3.trida": "3trida" };
-    location.href = `/pay/${map[window.__seatClass]}/${encodeURIComponent(window.__rid)}`;
-  });
-</script>
-
           </div>
         </form>
       </section>
