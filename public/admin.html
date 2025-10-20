@@ -28,14 +28,18 @@
         </div>
 
         <div class="flex" style="margin-top:12px;">
+          <!-- 🔹 REZERVACE -->
           <div class="col card" style="padding:16px;">
             <h3>Rezervace</h3>
             <table class="table" id="rezTable" style="margin-top:10px;">
-              <thead><tr><th>ID</th><th>Třída</th><th>Jméno</th><th>E-mail</th><th>Vytvořeno</th><th></th></tr></thead>
+              <thead>
+                <tr><th>ID</th><th>Třída</th><th>Jméno</th><th>E-mail</th><th>Vytvořeno</th><th></th></tr>
+              </thead>
               <tbody></tbody>
             </table>
           </div>
 
+          <!-- 🔹 KALENDÁŘ ZÁPASŮ -->
           <div class="col card" style="padding:16px;">
             <h3>Kalendář zápasů</h3>
             <div id="mMsg"></div>
@@ -52,6 +56,22 @@
             </form>
             <table class="table" id="matchTable" style="margin-top:10px;">
               <thead><tr><th>Datum</th><th>Název</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- 🟢 NOVINKY -->
+          <div class="col card" style="padding:16px;">
+            <h3>Novinky</h3>
+            <div id="newsMsg" style="margin-bottom:10px;"></div>
+
+            <form style="display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:end;">
+              <textarea id="nText" rows="2" placeholder="Zadejte text novinky…" style="width:100%; resize:vertical;"></textarea>
+              <button id="addNewsBtn">Přidat novinku</button>
+            </form>
+
+            <table class="table" id="newsTable" style="margin-top:10px;">
+              <thead><tr><th>Vytvořeno</th><th>Text</th><th></th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
