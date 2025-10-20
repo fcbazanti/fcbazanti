@@ -25,9 +25,9 @@ if (tabs.length) {
       const el = document.getElementById(`tab-${target}`);
       if (el) el.classList.add('active');
 
-      document.getElementById('tabs').scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
+      document.getElementById('tabs').scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
       });
     });
   });
@@ -77,6 +77,17 @@ if (form) {
       const j = await res.json();
       if (j.ok) {
         msg(msgEl, 'success', `Hotovo! ID rezervace: ${j.id}.`);
+
+        // Přesměrování podle třídy (Stripe / platba na stadionu)
+        const cls = data.class;
+        if (cls === '1. třída') {
+          window.location.href = 'https://buy.stripe.com/fZu5kCah27ADeVKaH2d7q03';
+        } else if (cls === '2. třída') {
+          window.location.href = 'https://buy.stripe.com/bJeaEW88U7AD00QeXid7q02';
+        } else if (cls === '3. třída') {
+          msg(msgEl, 'notice', 'Platba pro 3. třídu probíhá na stadionu.');
+        }
+
         form.reset();
       } else {
         msg(msgEl, 'error', j.error || 'Něco se nepovedlo.');
@@ -87,17 +98,24 @@ if (form) {
   });
 }
 
-// Veřejný kalendář – příští měsíc
+// === Veřejný kalendář – AKTUÁLNÍ měsíc (upraveno na nový endpoint) ===
 const upcomingBox = document.getElementById('upcoming');
 if (upcomingBox) {
   (async () => {
     try {
-      const res = await fetch('/api/matches/upcoming');
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1; // 1–12
+
+      const res = await fetch(`/api/matches?year=${year}&month=${month}`);
       const j = await res.json();
 
-      if (!j.ok) return;
+      if (!j.ok) {
+        upcomingBox.innerHTML = '<div class="notice">Nelze načíst kalendář.</div>';
+        return;
+      }
       if (!j.matches.length) {
-        upcomingBox.innerHTML = '<div class="notice">Zatím žádné zápasy pro příští měsíc.</div>';
+        upcomingBox.innerHTML = '<div class="notice">Zatím žádné zápasy pro tento měsíc.</div>';
         return;
       }
 
@@ -106,7 +124,7 @@ if (upcomingBox) {
         const d = new Date(m.date + 'T00:00:00');
         const item = document.createElement('div');
         item.className = 'card';
-        item.innerHTML = `<strong>${d.toLocaleDateString()}</strong><br>${m.title}`;
+        item.innerHTML = `<strong>${d.toLocaleDateString('cs-CZ')}</strong><br>${m.title}`;
         upcomingBox.appendChild(item);
       });
 
@@ -116,88 +134,219 @@ if (upcomingBox) {
   })();
 }
 
-// === NOVINKY (admin) ===
-const newsForm = document.getElementById('newsForm');
-if (newsForm) {
+// === Admin ===
+const loginBtn = document.getElementById('loginBtn');
+if (loginBtn) {
+  const loginBox = document.getElementById('loginBox');
+  const adminArea = document.getElementById('adminArea');
+  const loginMsg = document.getElementById('loginMsg');
+  const rezTbody = document.querySelector('#rezTable tbody');
+  const matchTbody = document.querySelector('#matchTable tbody');
+  const mMsg = document.getElementById('mMsg');
+
+  // --- NOVINKY: prvky (pokud existují v admin.html) ---
   const newsMsg = document.getElementById('newsMsg');
   const newsTbody = document.querySelector('#newsTable tbody');
+  const newsText = document.getElementById('nText');
+  const addNewsBtn = document.getElementById('addNewsBtn');
 
+  async function loadReservations() {
+    const res = await fetch('/api/reservations');
+    const j = await res.json();
+    if (!j.ok) {
+      msg(loginMsg, 'error', j.error || 'Nelze načíst rezervace.');
+      return;
+    }
+
+    rezTbody.innerHTML = '';
+    j.reservations.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${r.class}</td>
+        <td>${r.name}</td>
+        <td>${r.email}</td>
+        <td>${new Date(r.created_at).toLocaleString('cs-CZ')}</td>
+        <td><button data-id="${r.id}" class="secondary del-rez">Smazat</button></td>
+      `;
+      rezTbody.appendChild(tr);
+    });
+  }
+
+  async function loadMatches() {
+    const res = await fetch('/api/matches');
+    const j = await res.json();
+    if (!j.ok) {
+      msg(mMsg, 'error', j.error || 'Nelze načíst zápasy.');
+      return;
+    }
+
+    matchTbody.innerHTML = '';
+    j.matches.forEach(m => {
+      const d = new Date(m.date + 'T00:00:00');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${d.toLocaleDateString('cs-CZ')}</td>
+        <td>${m.title}</td>
+        <td><button data-id="${m.id}" class="secondary del-match">Smazat</button></td>
+      `;
+      matchTbody.appendChild(tr);
+    });
+  }
+
+  // --- NOVINKY: načtení ---
   async function loadNews() {
+    if (!newsTbody) return; // admin.html ještě nemusí mít sekci Novinky
     const res = await fetch('/api/news');
     const j = await res.json();
-    if (!j.ok) return msg(newsMsg, 'error', 'Nelze načíst novinky.');
+    if (!j.ok) {
+      msg(newsMsg, 'error', j.error || 'Nelze načíst novinky.');
+      return;
+    }
+
     newsTbody.innerHTML = '';
     j.news.forEach(n => {
       const tr = document.createElement('tr');
+      const d = new Date(n.created_at);
       tr.innerHTML = `
-        <td>${new Date(n.created_at).toLocaleDateString('cs-CZ')}</td>
+        <td>${d.toLocaleString('cs-CZ')}</td>
         <td>${n.text}</td>
-        <td><button data-id="${n.id}" class="secondary del-news">Smazat</button></td>`;
+        <td><button data-id="${n.id}" class="secondary del-news">Smazat</button></td>
+      `;
       newsTbody.appendChild(tr);
     });
   }
 
-  newsForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const text = document.getElementById('nText').value.trim();
-    if (!text) return;
-    const res = await fetch('/api/news', {
+  loginBtn.addEventListener('click', async () => {
+    const password = document.getElementById('password').value;
+    const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ password })
     });
+
     const j = await res.json();
     if (j.ok) {
-      msg(newsMsg, 'success', 'Novinka přidána.');
-      newsForm.reset();
+      loginBox.style.display = 'none';
+      adminArea.style.display = 'block';
+      await loadReservations();
+      await loadMatches();
       await loadNews();
-    } else msg(newsMsg, 'error', j.error);
+    } else {
+      msg(loginMsg, 'error', j.error || 'Špatné heslo.');
+    }
   });
 
-  document.addEventListener('click', async e => {
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    location.reload();
+  });
+
+  document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('del-rez')) {
+      const id = e.target.getAttribute('data-id');
+      if (confirm(`Smazat rezervaci #${id}?`)) {
+        const res = await fetch(`/api/reservations/${id}`, { method: 'DELETE' });
+        const j = await res.json();
+        if (j.ok) await loadReservations();
+      }
+    }
+
+    if (e.target.classList.contains('del-match')) {
+      const id = e.target.getAttribute('data-id');
+      if (confirm(`Smazat zápas #${id}?`)) {
+        const res = await fetch(`/api/matches/${id}`, { method: 'DELETE' });
+        const j = await res.json();
+        if (j.ok) await loadMatches();
+      }
+    }
+
     if (e.target.classList.contains('del-news')) {
-      const id = e.target.dataset.id;
-      if (confirm('Smazat novinku?')) {
-        await fetch(`/api/news/${id}`, { method: 'DELETE' });
-        await loadNews();
+      const id = e.target.getAttribute('data-id');
+      if (confirm(`Smazat novinku #${id}?`)) {
+        const res = await fetch(`/api/news/${id}`, { method: 'DELETE' });
+        const j = await res.json();
+        if (j.ok) await loadNews();
       }
     }
   });
 
-  loadNews();
-}
+  const matchForm = document.getElementById('matchForm');
+  matchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-// === ZOBRAZENÍ NOVINEK NA HLAVNÍ STRÁNCE ===
+    const title = document.getElementById('mTitle').value;
+    const date = document.getElementById('mDate').value;
+
+    const res = await fetch('/api/matches', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, date })
+    });
+
+    const j = await res.json();
+    if (j.ok) {
+      msg(mMsg, 'success', 'Zápas přidán.');
+      matchForm.reset();
+      await loadMatches();
+    } else {
+      msg(mMsg, 'error', j.error || 'Nepodařilo se přidat.');
+    }
+  });
+
+  // --- NOVINKY: přidání (pokud v HTML existuje tlačítko) ---
+  if (addNewsBtn) {
+    addNewsBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const text = (newsText?.value || '').trim();
+      if (!text) return msg(newsMsg, 'error', 'Zadejte text novinky.');
+
+      const res = await fetch('/api/news', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const j = await res.json();
+      if (j.ok) {
+        msg(newsMsg, 'success', 'Novinka přidána.');
+        newsText.value = '';
+        await loadNews();
+      } else {
+        msg(newsMsg, 'error', j.error || 'Nepodařilo se přidat novinku.');
+      }
+    });
+  }
+}
+// === Veřejné zobrazení novinek (hlavní stránka) ===
 const newsBox = document.getElementById('newsBox');
 if (newsBox) {
   (async () => {
-    const res = await fetch('/api/news');
-    const j = await res.json();
-    if (!j.ok || !j.news.length) {
-      newsBox.innerHTML = '<div class="notice">Zatím žádné novinky.</div>';
-      return;
+    try {
+      const res = await fetch('/api/news');
+      const j = await res.json();
+
+      if (!j.ok) {
+        newsBox.innerHTML = '<div class="notice">Nepodařilo se načíst novinky.</div>';
+        return;
+      }
+
+      if (j.news.length === 0) {
+        newsBox.innerHTML = '<div class="notice">Zatím žádné novinky.</div>';
+        return;
+      }
+
+      newsBox.innerHTML = '';
+      j.news.forEach(n => {
+        const d = new Date(n.created_at).toLocaleDateString('cs-CZ');
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `<strong>${d}</strong><br>${n.text}`;
+        newsBox.appendChild(div);
+      });
+    } catch (err) {
+      console.error('❌ Chyba při načítání novinek:', err);
+      newsBox.innerHTML = '<div class="notice">Chyba spojení se serverem.</div>';
     }
-    newsBox.innerHTML = '';
-    j.news.forEach(n => {
-      const d = new Date(n.created_at).toLocaleDateString('cs-CZ');
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.innerHTML = `<strong>${d}</strong><br>${n.text}`;
-      newsBox.appendChild(div);
-    });
   })();
 }
 
-// === STRIPE LOGIKA ===
-const bookForm = document.getElementById('bookForm');
-if (bookForm) {
-  bookForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const cls = bookForm.class.value;
-
-    if (cls === '1. třída') return (window.location.href = 'https://buy.stripe.com/link1');
-    if (cls === '2. třída') return (window.location.href = 'https://buy.stripe.com/link2');
-
-    alert('Platba probíhá na stadionu, rezervace bude uložena.');
-  });
-}
