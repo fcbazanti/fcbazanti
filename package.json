@@ -1,6 +1,6 @@
 {
-  "name": "fcbazanti",
-  "version": "1.1.0",
+  "name": "fcbazantnice",
+  "version": "2.0.0",
   "description": "Rezervace + kalendář zápasů pro FC Bažantnice",
   "main": "server.js",
   "type": "module",
@@ -14,7 +14,9 @@
     "express-session": "^1.17.3",
     "helmet": "^7.1.0",
     "sqlite3": "^5.1.7",
-    "sqlite": "^4.2.1"
+    "sqlite": "^4.2.1",
+    "nodemailer": "^6.9.8",
+    "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
