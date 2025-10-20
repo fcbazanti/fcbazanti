@@ -6,6 +6,8 @@ import path from 'path';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import nodemailer from 'nodemailer';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 
 dotenv.config();
 
@@ -20,19 +22,21 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'change_me',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 8 }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'change_me',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 8 }
+  })
+);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// === DB ===
 let db;
 (async () => {
   db = await open({ filename: path.join(__dirname, 'db.sqlite'), driver: sqlite3.Database });
-
   await db.exec(`
     CREATE TABLE IF NOT EXISTS reservations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,94 +46,142 @@ let db;
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
-
   await db.exec(`
     CREATE TABLE IF NOT EXISTS matches (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
-      date TEXT NOT NULL, -- YYYY-MM-DD
+      date TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS news (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      text TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
 })();
 
-// Rezervace
+// === Email transporter ===
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false,
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+});
+
+// === Helpers ===
+function requireAdmin(req, res, next) {
+  if (req.session?.isAdmin) return next();
+  res.status(401).json({ ok: false, error: 'Nejste přihlášen/a.' });
+}
+
+// === Rezervace ===
 app.post('/api/book', async (req, res) => {
   try {
-    const { class: selectedClass, name, email } = req.body;
-    if (!selectedClass || !name || !email) {
+    const { class: cls, name, email } = req.body;
+    if (!cls || !name || !email)
       return res.status(400).json({ ok: false, error: 'Vyplňte třídu, jméno i e-mail.' });
-    }
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRe.test(email)) return res.status(400).json({ ok: false, error: 'Zadejte platný e-mail.' });
 
-    const stmt = await db.run('INSERT INTO reservations (class, name, email) VALUES (?, ?, ?)', [selectedClass, name.trim(), email.trim().toLowerCase()]);
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(email))
+      return res.status(400).json({ ok: false, error: 'Zadejte platný e-mail.' });
+
+    const stmt = await db.run(
+      'INSERT INTO reservations (class, name, email) VALUES (?, ?, ?)',
+      [cls, name.trim(), email.trim().toLowerCase()]
+    );
+
+    // === PDF vstupenka ===
+    const expiry = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30 * 6);
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([400, 240]);
+    const font = await pdf.embedFont(StandardFonts.Helvetica);
+    page.drawText('FC Bažantnice – Vstupenka', { x: 90, y: 200, size: 16, font });
+    page.drawText(`ID rezervace: ${stmt.lastID}`, { x: 50, y: 165, size: 13, font });
+    page.drawText(`Jméno: ${name}`, { x: 50, y: 145, size: 13, font });
+    page.drawText(`Třída: ${cls}`, { x: 50, y: 125, size: 13, font });
+    page.drawText(`Vytvořeno: ${new Date().toLocaleDateString('cs-CZ')}`, { x: 50, y: 105, size: 13, font });
+    page.drawText(`Platnost do: ${expiry.toLocaleDateString('cs-CZ')}`, { x: 50, y: 85, size: 13, font });
+    const pdfBytes = await pdf.save();
+
+    // === E-maily ===
+    await transporter.sendMail({
+      from: `"FC Bažantnice" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: `Potvrzení rezervace #${stmt.lastID}`,
+      text: `Děkujeme za rezervaci! Vaše vstupenka platí 6 měsíců.`,
+      attachments: [{ filename: `vstupenka_${stmt.lastID}.pdf`, content: pdfBytes }]
+    });
+    await transporter.sendMail({
+      from: `"FC Bažantnice" <${process.env.SMTP_USER}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: `Nová rezervace #${stmt.lastID}`,
+      text: `Rezervace od ${name} (${email}) – ${cls}`
+    });
+
     res.json({ ok: true, id: stmt.lastID });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ ok: false, error: 'Chyba serveru. Zkuste to prosím znovu.' });
+    res.status(500).json({ ok: false, error: 'Chyba serveru.' });
   }
 });
 
-// Admin login
+// === Admin login/logout ===
 app.post('/api/admin/login', (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASSWORD) { req.session.isAdmin = true; return res.json({ ok: true }); }
-  return res.status(401).json({ ok: false, error: 'Špatné heslo.' });
+  if (req.body.password === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ ok: false, error: 'Špatné heslo.' });
 });
-app.post('/api/admin/logout', (req, res) => { req.session.destroy(() => res.json({ ok: true })); });
+app.post('/api/admin/logout', (req, res) => req.session.destroy(() => res.json({ ok: true })));
 
-function requireAdmin(req, res, next) { if (req.session?.isAdmin) return next(); return res.status(401).json({ ok: false, error: 'Nejste přihlášen/a.' }); }
-
-// Admin: výpis rezervací
-app.get('/api/reservations', requireAdmin, async (req, res) => {
-  try {
-    const rows = await db.all('SELECT * FROM reservations ORDER BY created_at DESC');
-    res.json({ ok: true, reservations: rows });
-  } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nepodařilo se načíst rezervace.' }); }
-});
-
+// === Admin: rezervace ===
+app.get('/api/reservations', requireAdmin, async (_, res) =>
+  res.json({ ok: true, reservations: await db.all('SELECT * FROM reservations ORDER BY created_at DESC') })
+);
 app.delete('/api/reservations/:id', requireAdmin, async (req, res) => {
-  try { await db.run('DELETE FROM reservations WHERE id = ?', [req.params.id]); res.json({ ok: true }); }
-  catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Smazání se nepodařilo.' }); }
+  await db.run('DELETE FROM reservations WHERE id=?', [req.params.id]);
+  res.json({ ok: true });
 });
 
-// === ZÁPASY (kalendář) ===
-// Přidání zápasu (admin)
+// === Zápasy + kalendář ===
 app.post('/api/matches', requireAdmin, async (req, res) => {
-  try {
-    const { title, date } = req.body; // date: YYYY-MM-DD
-    if (!title || !date) return res.status(400).json({ ok: false, error: 'Vyplňte název a datum.' });
-    const stmt = await db.run('INSERT INTO matches (title, date) VALUES (?, ?)', [title.trim(), date]);
-    res.json({ ok: true, id: stmt.lastID });
-  } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nelze uložit zápas.' }); }
+  const { title, date } = req.body;
+  if (!title || !date) return res.json({ ok: false, error: 'Vyplňte název a datum.' });
+  await db.run('INSERT INTO matches (title, date) VALUES (?, ?)', [title.trim(), date]);
+  res.json({ ok: true });
 });
-
-// Seznam všech zápasů (admin)
-app.get('/api/matches', requireAdmin, async (req, res) => {
-  try {
-    const rows = await db.all('SELECT * FROM matches ORDER BY date DESC, id DESC');
-    res.json({ ok: true, matches: rows });
-  } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nelze načíst zápasy.' }); }
+app.get('/api/matches', async (req, res) => {
+  const { year, month } = req.query;
+  if (year && month) {
+    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+    const end = `${year}-${String(Number(month) + 1).padStart(2, '0')}-01`;
+    const rows = await db.all('SELECT * FROM matches WHERE date >= ? AND date < ?', [start, end]);
+    return res.json({ ok: true, matches: rows });
+  }
+  const rows = await db.all('SELECT * FROM matches ORDER BY date DESC');
+  res.json({ ok: true, matches: rows });
 });
-
-// Smazání zápasu (admin)
 app.delete('/api/matches/:id', requireAdmin, async (req, res) => {
-  try { await db.run('DELETE FROM matches WHERE id = ?', [req.params.id]); res.json({ ok: true }); }
-  catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Smazání se nepodařilo.' }); }
+  await db.run('DELETE FROM matches WHERE id=?', [req.params.id]);
+  res.json({ ok: true });
 });
 
-// Veřejně: zápasy na následující měsíc
-app.get('/api/matches/upcoming', async (req, res) => {
-  try {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 2, 1);
-    const startStr = start.toISOString().slice(0,10);
-    const endStr = end.toISOString().slice(0,10);
-    const rows = await db.all('SELECT * FROM matches WHERE date >= ? AND date < ? ORDER BY date ASC', [startStr, endStr]);
-    res.json({ ok: true, matches: rows, month: start.getMonth() + 1, year: start.getFullYear() });
-  } catch (e) { console.error(e); res.status(500).json({ ok: false, error: 'Nelze načíst kalendář.' }); }
+// === Novinky ===
+app.get('/api/news', async (_, res) =>
+  res.json({ ok: true, news: await db.all('SELECT * FROM news ORDER BY created_at DESC') })
+);
+app.post('/api/news', requireAdmin, async (req, res) => {
+  if (!req.body.text) return res.json({ ok: false, error: 'Zadejte text.' });
+  await db.run('INSERT INTO news (text) VALUES (?)', [req.body.text]);
+  res.json({ ok: true });
+});
+app.delete('/api/news/:id', requireAdmin, async (req, res) => {
+  await db.run('DELETE FROM news WHERE id=?', [req.params.id]);
+  res.json({ ok: true });
 });
 
-app.listen(PORT, () => { console.log(`Server běží na http://localhost:${PORT}`); });
+app.listen(PORT, () => console.log(`✅ Server běží na http://localhost:${PORT}`));
