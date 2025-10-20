@@ -24,33 +24,30 @@
         <div class="tab" data-tab="rezervace">Rezervace</div>
         <div class="tab" data-tab="kalendar">Kalendář</div>
         <div class="tab" data-tab="cenik">Ceník</div>
+        <div class="tab" data-tab="novinky">Novinky</div>
         <a href="/admin.html" class="tab" style="text-decoration:none;">Admin</a>
       </nav>
 
       <section id="tab-uvod" class="tab-content active">
         <h2>Vítejte</h2>
         <p>Oficiální stránka klubu FC Bažantnice. Sídlíme v Malé Hraštici, kde máme stadion. Pokud byste měli chuť a čas přijít se podívat na zápas, zarezervujte si místo. Naším cílem je vydělat na dresy, proto se určitě nebojte nás <strong>podpořit.</strong> Pokud nás chcete podpořit v tvorbě, sjeďte na této záložce o trochu níže. Pokud si chcete koupit nebo zarezervovat místa, jděte do záložky <strong>Rezervace.</strong> Pokud chcete zakoupit permanentku, kontaktujte nás, nebo si ji kupte přímo na stadionu. Nově vznikl časopis FC Bažanti, pokud si chcete zakoupit předplatné tohoto časopisu, můžete si to koupit níže pod textem nebo na stadioně. </p>
+
         <div class="grid grid-2" style="margin-top:12px;">
           <img src="/stadium.png" alt="Stadion" style="width:100%; border-radius:12px;"/>
           <img src="/logo.png" alt="Logo" style="width:100%; border-radius:12px; background:#e2e8f0; padding:12px;"/>
-         <script async
-  src="https://js.stripe.com/v3/buy-button.js">
-</script>
 
-<stripe-buy-button
-  buy-button-id="buy_btn_1S3KsYBew8uV3jjD4aCJrSZe"
-  publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl"
->
-</stripe-buy-button>
-          <script async
-  src="https://js.stripe.com/v3/buy-button.js">
-</script>
+          <!-- Stripe tlačítka -->
+          <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+          <stripe-buy-button
+            buy-button-id="buy_btn_1S3KsYBew8uV3jjD4aCJrSZe"
+            publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
+          </stripe-buy-button>
 
-<stripe-buy-button
-  buy-button-id="buy_btn_1S4JMNBew8uV3jjDLDRQpgAC"
-  publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl"
->
-</stripe-buy-button>
+          <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+          <stripe-buy-button
+            buy-button-id="buy_btn_1S4JMNBew8uV3jjDLDRQpgAC"
+            publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
+          </stripe-buy-button>
         </div>
       </section>
 
@@ -95,26 +92,7 @@
           <input id="email" name="email" placeholder="jan.novak@example.com" required type="email" />
 
           <div style="display:flex; gap:10px; margin-top:12px;">
-            <button type="submit">Odeslat pouze rezervaci (plaiti na místě)</button>
-            
-<script async
-  src="https://js.stripe.com/v3/buy-button.js">
-</script>
-
-<stripe-buy-button
-  buy-button-id="buy_btn_1S3KsZBew8uV3jjD9ICzxaUj"
-  publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl"
->
-</stripe-buy-button>
-            <script async
-  src="https://js.stripe.com/v3/buy-button.js">
-</script>
-
-<stripe-buy-button
-  buy-button-id="buy_btn_1S3KsZBew8uV3jjDccmwSgvc"
-  publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl"
->
-</stripe-buy-button>
+            <button type="submit">Odeslat rezervaci</button>
           </div>
         </form>
       </section>
@@ -122,7 +100,7 @@
       <section id="tab-kalendar" class="tab-content">
         <h2>Kalendář – příští měsíc</h2>
         <div id="upcoming" class="grid" style="gap:8px;"></div>
-        <p class="notice">Zde budou zobrazeny.</p>
+        <p class="notice">Zde budou zobrazeny plánované zápasy a akce.</p>
       </section>
 
       <section id="tab-cenik" class="tab-content">
@@ -137,31 +115,20 @@
             <tr><td><span class="badge">3. třída</span></td><td>20 Kč</td><td>250 Kč</td></tr>
           </tbody>
         </table>
-        <h1>Výhody</h1>
-<ul>
-  <lh>1. třída</lh>
-  <li>Welcome drink</li>
-  <li>Cereálie (pro děti)</li>
-  <li>Sladkost (občas domácí od Haničky)</li>
-  <li>Občas bageta</li>
-  <li>Ovoce / zelenina</li>
-  <li>Sleva ve fan shopu až 100 % (na vybrané produkty)</li>
-  <li>Setkání s hráči</li>
-  <li>Pohodlné sezení</li>
-  <li>Možnost platit online</li>
-
-  <lh>2. třída</lh>
-  <li>Ovoce</li>
-  <li>Sladkost</li>
-  <li>Setkání s hráči</li>
-  <li>Možnost platit online</li>
-</ul>
-        <p>Ve všech třídách je zajištěna voda, ve třetí třídě není nic jiného</p>
       </section>
+
+      <!-- 🆕 NOVÁ SEKCE NOVINKY -->
+      <section id="tab-novinky" class="tab-content">
+        <h2>Novinky</h2>
+        <div id="newsBox" class="grid" style="gap:8px;"></div>
+        <p class="notice">Zde se zobrazí novinky přidané z admin sekce.</p>
+      </section>
+
     </div>
 
     <footer class="footer">© <span id="year"></span> FC Bažantnice • <a href="/admin.html">Administrace</a></footer>
   </div>
+
   <script src="/app.js"></script>
 </body>
 </html>
