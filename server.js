@@ -78,55 +78,9 @@ function requireAdmin(req, res, next) {
 }
 
 // === Rezervace ===
-app.post('/api/book', async (req, res) => {
-  try {
-    const { class: cls, name, email } = req.body;
-    if (!cls || !name || !email)
-      return res.status(400).json({ ok: false, error: 'Vyplňte třídu, jméno i e-mail.' });
 
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRe.test(email))
-      return res.status(400).json({ ok: false, error: 'Zadejte platný e-mail.' });
 
-    const stmt = await db.run(
-      'INSERT INTO reservations (class, name, email) VALUES (?, ?, ?)',
-      [cls, name.trim(), email.trim().toLowerCase()]
-    );
 
-    // === PDF vstupenka ===
-    const expiry = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30 * 6);
-    const pdf = await PDFDocument.create();
-    const page = pdf.addPage([400, 240]);
-    const font = await pdf.embedFont(StandardFonts.Helvetica);
-    page.drawText('FC Bažantnice – Vstupenka', { x: 90, y: 200, size: 16, font });
-    page.drawText(`ID rezervace: ${stmt.lastID}`, { x: 50, y: 165, size: 13, font });
-    page.drawText(`Jméno: ${name}`, { x: 50, y: 145, size: 13, font });
-    page.drawText(`Třída: ${cls}`, { x: 50, y: 125, size: 13, font });
-    page.drawText(`Vytvořeno: ${new Date().toLocaleDateString('cs-CZ')}`, { x: 50, y: 105, size: 13, font });
-    page.drawText(`Platnost do: ${expiry.toLocaleDateString('cs-CZ')}`, { x: 50, y: 85, size: 13, font });
-    const pdfBytes = await pdf.save();
-
-    // === E-maily ===
-    await transporter.sendMail({
-      from: `"FC Bažantnice" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: `Potvrzení rezervace #${stmt.lastID}`,
-      text: `Děkujeme za rezervaci! Vaše vstupenka platí 6 měsíců.`,
-      attachments: [{ filename: `vstupenka_${stmt.lastID}.pdf`, content: pdfBytes }]
-    });
-    await transporter.sendMail({
-      from: `"FC Bažantnice" <${process.env.SMTP_USER}>`,
-      to: process.env.ADMIN_EMAIL,
-      subject: `Nová rezervace #${stmt.lastID}`,
-      text: `Rezervace od ${name} (${email}) – ${cls}`
-    });
-
-    res.json({ ok: true, id: stmt.lastID });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ ok: false, error: 'Chyba serveru.' });
-  }
-});
 
 // === Admin login/logout ===
 app.post('/api/admin/login', (req, res) => {
@@ -135,7 +89,36 @@ app.post('/api/admin/login', (req, res) => {
     return res.json({ ok: true });
   }
   res.status(401).json({ ok: false, error: 'Špatné heslo.' });
+});// === Rezervace ===
+app.post('/api/book', async (req, res) => {
+  try {
+    const { class: selectedClass, name, email } = req.body;
+
+    // Kontrola vstupů
+    if (!selectedClass || !name || !email) {
+      return res.status(400).json({ ok: false, error: 'Vyplňte třídu, jméno i e-mail.' });
+    }
+
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(email)) {
+      return res.status(400).json({ ok: false, error: 'Zadejte platný e-mail.' });
+    }
+
+    // Uložení do databáze
+    const stmt = await db.run(
+      'INSERT INTO reservations (class, name, email) VALUES (?, ?, ?)',
+      [selectedClass.trim(), name.trim(), email.trim().toLowerCase()]
+    );
+
+    console.log("✅ Rezervace uložena – ID:", stmt.lastID);
+    res.status(200).json({ ok: true, id: stmt.lastID });
+
+  } catch (e) {
+    console.error("❌ CHYBA API /api/book:", e.message);
+    res.status(500).json({ ok: false, error: 'Chyba na serveru při ukládání rezervace.' });
+  }
 });
+
 app.post('/api/admin/logout', (req, res) => req.session.destroy(() => res.json({ ok: true })));
 
 // === Admin: rezervace ===
