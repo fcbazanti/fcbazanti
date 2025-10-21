@@ -6,7 +6,7 @@ import path from "path";
 import helmet from "helmet";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { Resend } from "resend";
 import registerStripeWebhook from "./stripe-webhook.js";
 
@@ -20,8 +20,10 @@ const PORT = process.env.PORT || 8080;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "bazant";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ⚠️ Stripe webhook musí být registrován dřív než JSON parsery!
 registerStripeWebhook(app);
 
+// ✅ Až potom ostatní middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -98,7 +100,9 @@ app.post("/api/book", async (req, res) => {
     const { class: selectedClass, name, email } = req.body;
 
     if (!selectedClass || !name || !email) {
-      return res.status(400).json({ ok: false, error: "Vyplňte třídu, jméno i e-mail." });
+      return res
+        .status(400)
+        .json({ ok: false, error: "Vyplňte třídu, jméno i e-mail." });
     }
 
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -124,7 +128,9 @@ app.post("/api/book", async (req, res) => {
     res.status(200).json({ ok: true, id: stmt.lastID });
   } catch (e) {
     console.error("❌ CHYBA API /api/book:", e.message);
-    res.status(500).json({ ok: false, error: "Chyba na serveru při ukládání rezervace." });
+    res
+      .status(500)
+      .json({ ok: false, error: "Chyba na serveru při ukládání rezervace." });
   }
 });
 
@@ -177,7 +183,10 @@ app.delete("/api/matches/:id", requireAdmin, async (req, res) => {
 
 // === Novinky ===
 app.get("/api/news", async (_, res) =>
-  res.json({ ok: true, news: await db.all("SELECT * FROM news ORDER BY created_at DESC") })
+  res.json({
+    ok: true,
+    news: await db.all("SELECT * FROM news ORDER BY created_at DESC"),
+  })
 );
 
 app.post("/api/news", requireAdmin, async (req, res) => {
@@ -191,4 +200,7 @@ app.delete("/api/news/:id", requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, () => console.log(`✅ Server běží na http://localhost:${PORT}`));
+// === Start serveru ===
+app.listen(PORT, () =>
+  console.log(`✅ Server běží na http://localhost:${PORT}`)
+);
