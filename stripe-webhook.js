@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import nodemailer from 'nodemailer';
 import QRCode from 'qrcode';
 import { PDFDocument } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -41,10 +42,9 @@ export default function registerStripeWebhook(app) {
             : 'https://fcbazanti.onrender.com/ticket.html?class=2';
 
         const qrData = await QRCode.toDataURL(redirectUrl);
-        import fontkit from '@pdf-lib/fontkit';
+
         // === PDF s QR ===
         const pdfDoc = await PDFDocument.create();
-        
         pdfDoc.registerFontkit(fontkit);
 
         const page = pdfDoc.addPage([400, 300]);
@@ -118,5 +118,3 @@ export default function registerStripeWebhook(app) {
     }
   );
 }
-
-
