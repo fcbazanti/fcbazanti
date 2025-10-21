@@ -6,7 +6,6 @@ import path from 'path';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import nodemailer from 'nodemailer';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 
 dotenv.config();
