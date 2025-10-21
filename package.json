@@ -1,27 +1,21 @@
 {
-  "name": "fcbazantnice",
-  "version": "2.0.0",
-  "description": "Rezervace + kalendář zápasů pro FC Bažantnice",
-  "main": "server.js",
+  "name": "fcbazanti",
+  "version": "1.0.0",
   "type": "module",
+  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-session": "^1.17.3",
-    "helmet": "^7.1.0",
+    "helmet": "^7.0.0",
+    "sqlite": "^5.1.6",
     "sqlite3": "^5.1.7",
-    "sqlite": "^4.2.1",
-    "nodemailer": "^6.9.8",
-    "pdf-lib": "^1.17.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.0"
-  },
-  "engines": {
-    "node": ">=18 <22"
+    "dotenv": "^16.3.1",
+    "nodemailer": "^6.9.11",
+    "stripe": "^16.0.0",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.3"
   }
 }
