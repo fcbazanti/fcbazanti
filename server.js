@@ -10,7 +10,7 @@ import nodemailer from 'nodemailer';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 
 dotenv.config();
-
+import registerStripeWebhook from "./stripe-webhook.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
