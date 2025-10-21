@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vstupenka – FC Bažantnice</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="container card" style="text-align:center; margin-top:40px;">
+    <h1>🎟️ Platná vstupenka</h1>
+    <div id="ticketInfo" style="margin-top:20px; font-size:18px;"></div>
+    <p class="notice" style="margin-top:12px;">Ukažte tuto stránku při vstupu.</p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const c = params.get('class');
+    const info = document.getElementById('ticketInfo');
+    if (c === '1') info.innerHTML = '<strong>1. třída</strong><br>Přístup do VIP zóny';
+    else if (c === '2') info.innerHTML = '<strong>2. třída</strong><br>Běžné sezení';
+    else info.innerHTML = 'Neplatná nebo neznámá vstupenka.';
+  </script>
+</body>
+</html>
