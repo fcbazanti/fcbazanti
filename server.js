@@ -17,6 +17,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'bazant';
+registerStripeWebhook(app);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
