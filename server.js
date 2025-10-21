@@ -167,7 +167,6 @@ app.delete('/api/news/:id', requireAdmin, async (req, res) => {
   await db.run('DELETE FROM news WHERE id=?', [req.params.id]);
   res.json({ ok: true });
 });
-import registerStripeWebhook from './stripe-webhook.js';
-registerStripeWebhook(app);
+
 
 app.listen(PORT, () => console.log(`✅ Server běží na http://localhost:${PORT}`));
