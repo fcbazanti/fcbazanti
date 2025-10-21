@@ -41,10 +41,10 @@ export default function registerStripeWebhook(app) {
             : 'https://fcbazanti.onrender.com/ticket.html?class=2';
 
         const qrData = await QRCode.toDataURL(redirectUrl);
-
+        import fontkit from '@pdf-lib/fontkit';
         // === PDF s QR ===
         const pdfDoc = await PDFDocument.create();
-        import fontkit from '@pdf-lib/fontkit';
+        
         pdfDoc.registerFontkit(fontkit);
 
         const page = pdfDoc.addPage([400, 300]);
@@ -118,4 +118,5 @@ export default function registerStripeWebhook(app) {
     }
   );
 }
+
 
