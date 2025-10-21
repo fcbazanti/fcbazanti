@@ -44,7 +44,7 @@ export default function registerStripeWebhook(app) {
       const page = pdfDoc.addPage([400, 300]);
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const { width, height } = page.getSize();
-      const title = `🎟️ Vstupenka FC Bažantnice`;
+      const title = ` Vstupenka FC Bažantnice`;
       page.drawText(title, { x: 50, y: height - 50, size: 16, font });
       page.drawText(`Třída: ${ticketClass}`, { x: 50, y: height - 80, size: 12, font });
       page.drawText(`Platnost: 6 měsíců od zakoupení`, { x: 50, y: height - 100, size: 12, font });
@@ -80,3 +80,4 @@ export default function registerStripeWebhook(app) {
     res.json({ received: true });
   });
 }
+
