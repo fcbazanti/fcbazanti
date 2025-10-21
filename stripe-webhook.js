@@ -89,13 +89,14 @@ export default function registerStripeWebhook(app) {
         // === E-mail ===
         const transporter = nodemailer.createTransport({
           host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          secure: false,
+          port: 465,
+          secure: true, // SSL
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
           },
         });
+
 
         await transporter.sendMail({
           from: 'FC Bažantnice <' + process.env.SMTP_USER + '>',
