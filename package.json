@@ -1,25 +1,23 @@
 {
   "name": "fcbazanti",
   "version": "1.0.0",
-  "type": "module",
+  "description": "FC Bažantnice web app",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
- "dependencies": {
-   "express": "^4.18.2",
-   "express-session": "^1.17.3",
-   "helmet": "^7.0.0",
-   "sqlite": "^5.1.6",
-   "sqlite3": "^5.1.6",
-   "stripe": "^15.0.0",
-   "dotenv": "^16.0.3",
-   "nodemailer": "^6.9.1",
-   "pdf-lib": "^1.17.1",
-   "qrcode": "^1.5.3",
-   "fontkit": "^2.0.2"
-}
-
-}
-
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "helmet": "^7.0.0",
+    "sqlite": "^5.1.6",
+    "sqlite3": "^5.1.6",
+    "stripe": "^15.0.0",
+    "dotenv": "^16.0.3",
+    "nodemailer": "^6.9.1",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.3",
+    "fontkit": "^2.0.2"
+  }
 }
