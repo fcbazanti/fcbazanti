@@ -44,6 +44,9 @@ export default function registerStripeWebhook(app) {
 
         // === PDF s QR ===
         const pdfDoc = await PDFDocument.create();
+        import fontkit from '@pdf-lib/fontkit';
+        pdfDoc.registerFontkit(fontkit);
+
         const page = pdfDoc.addPage([400, 300]);
 
         // 🧩 Načti font s podporou češtiny
@@ -115,3 +118,4 @@ export default function registerStripeWebhook(app) {
     }
   );
 }
+
