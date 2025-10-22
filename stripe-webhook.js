@@ -55,7 +55,7 @@ export default function registerStripeWebhook(app) {
           const page = pdfDoc.addPage([400, 300]);
           const { width, height } = page.getSize();
 
-          page.drawText('🎫 Vstupenka FC Bažantnice', { x: 50, y: height - 50, size: 16 });
+          page.drawText('Vstupenka FC Bažantnice', { x: 50, y: height - 50, size: 16 });
           page.drawText(`Třída: ${ticketClass}`, { x: 50, y: height - 80, size: 12 });
           page.drawText(`Platnost: 6 měsíců od zakoupení`, { x: 50, y: height - 100, size: 12 });
 
@@ -96,3 +96,4 @@ export default function registerStripeWebhook(app) {
     }
   );
 }
+
