@@ -1,3 +1,4 @@
+
 import express from "express";
 import bodyParser from "body-parser";
 import Stripe from "stripe";
@@ -6,6 +7,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { PDFDocument } from "pdf-lib";
+import fontkit from "fontkit"; // 🔤 přidáno pro vlastní fonty
 import { Resend } from "resend";
 
 dotenv.config();
@@ -15,7 +17,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default function registerStripeWebhook(app) {
-  // Stripe webhook musí používat raw body parser
+  // ✅ Webhook musí mít raw body parser
   app.post(
     "/api/stripe/webhook",
     bodyParser.raw({ type: "application/json" }),
@@ -33,7 +35,6 @@ export default function registerStripeWebhook(app) {
         return res.status(400).send(`Webhook Error: ${err.message}`);
       }
 
-      // === Checkout dokončen ===
       if (event.type === "checkout.session.completed") {
         const session = event.data.object;
         const email = session.customer_details?.email || "neznamy@uzivatel.cz";
@@ -49,19 +50,20 @@ export default function registerStripeWebhook(app) {
               : "https://fcbazanti.onrender.com/ticket.html?class=2";
 
           const qrData = await QRCode.toDataURL(redirectUrl);
-          console.log("✅ QR kód úspěšně vygenerován");
+          console.log("🟩 QR kód úspěšně vygenerován");
 
           // === PDF s QR ===
           const pdfDoc = await PDFDocument.create();
-          const page = pdfDoc.addPage([400, 300]);
-          const { height } = page.getSize();
+          pdfDoc.registerFontkit(fontkit); // ✅ registrace fontkitu
 
-          // 📄 Načti font z public složky (Roboto-Regular.ttf)
-          const fontPath = path.join(process.cwd(), "public", "fonts", "Roboto-Regular.ttf");
+          // Načtení vlastního fontu z public/fonts
+          const fontPath = path.join(process.cwd(), "public", "fonts", "DejaVuSans.ttf");
           const fontBytes = fs.readFileSync(fontPath);
           const customFont = await pdfDoc.embedFont(fontBytes);
 
-          // === Texty s diakritikou ===
+          const page = pdfDoc.addPage([400, 300]);
+          const { width, height } = page.getSize();
+
           page.drawText("Vstupenka FC Bažantnice", {
             x: 50,
             y: height - 50,
@@ -83,18 +85,17 @@ export default function registerStripeWebhook(app) {
             font: customFont,
           });
 
-          // === QR obrázek ===
+          // QR kód do PDF
           const png = Buffer.from(qrData.split(",")[1], "base64");
           const qrImage = await pdfDoc.embedPng(png);
           page.drawImage(qrImage, { x: 120, y: 80, width: 150, height: 150 });
 
-          // === Ulož PDF ===
           const pdfBytes = await pdfDoc.save();
           const pdfPath = path.join("./", `ticket_${Date.now()}.pdf`);
           fs.writeFileSync(pdfPath, pdfBytes);
-          console.log("✅ PDF vstupenka vytvořena:", pdfPath);
+          console.log("🧾 PDF vstupenka vytvořena:", pdfPath);
 
-          // === Odeslání e-mailu ===
+          // === Odeslání e-mailu přes RESEND ===
           const sendResult = await resend.emails.send({
             from: process.env.RESEND_FROM,
             to: email,
@@ -108,7 +109,7 @@ export default function registerStripeWebhook(app) {
             ],
           });
 
-          console.log("✅ E-mail odeslán přes Resend:", sendResult?.id || sendResult);
+          console.log("📧 E-mail odeslán přes Resend:", sendResult?.id || sendResult);
           fs.unlinkSync(pdfPath);
           console.log("🧹 Dočasný PDF soubor odstraněn");
         } catch (error) {
@@ -116,7 +117,7 @@ export default function registerStripeWebhook(app) {
         }
       }
 
-      // Stripe musí dostat odpověď (jinak retry)
+      // ✅ Stripe očekává odpověď vždy
       res.json({ received: true });
       console.log("✅ Webhook dokončen a Stripe potvrzen (200 OK)");
     }
