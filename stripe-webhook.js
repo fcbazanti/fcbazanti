@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { PDFDocument } from "pdf-lib";
-import fontkit from "fontkit"; // 🔤 přidáno pro vlastní fonty
+import * as fontkit from "fontkit"; // 🔤 přidáno pro vlastní fonty
 import { Resend } from "resend";
 
 dotenv.config();
@@ -123,3 +123,4 @@ export default function registerStripeWebhook(app) {
     }
   );
 }
+
