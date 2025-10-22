@@ -53,11 +53,12 @@ export default function registerStripeWebhook(app) {
           console.log("🟩 QR kód úspěšně vygenerován");
 
           // === PDF s QR ===
+          // === PDF s QR ===
           const pdfDoc = await PDFDocument.create();
           pdfDoc.registerFontkit(fontkit); // ✅ registrace fontkitu
 
-          // Načtení vlastního fontu z public/fonts
-          const fontPath = path.join(process.cwd(), "public", "fonts", "DejaVuSans.ttf");
+// Načtení vlastního fontu z public/fonts
+          const fontPath = path.join(process.cwd(), "public", "fonts", "Roboto-Regular.ttf");
           const fontBytes = fs.readFileSync(fontPath);
           const customFont = await pdfDoc.embedFont(fontBytes);
 
@@ -78,12 +79,13 @@ export default function registerStripeWebhook(app) {
             font: customFont,
           });
 
-          page.drawText("Platnost: 6 měsíců od zakoupení", {
-            x: 50,
-            y: height - 100,
-            size: 12,
-            font: customFont,
-          });
+        page.drawText(`Platnost: 6 měsíců od zakoupení`, {
+          x: 50,
+          y: height - 100,
+          size: 12,
+          font: customFont,
+        });
+
 
           // QR kód do PDF
           const png = Buffer.from(qrData.split(",")[1], "base64");
@@ -123,4 +125,5 @@ export default function registerStripeWebhook(app) {
     }
   );
 }
+
 
