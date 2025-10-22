@@ -44,13 +44,15 @@ export default function registerStripeWebhook(app) {
 
         try {
           // === QR kód ===
+// === QR kód ===
           const redirectUrl =
-            ticketClass === "1. třída"
-              ? "https://fcbazanti.onrender.com/ticket.html?class=1"
-              : "https://fcbazanti.onrender.com/ticket.html?class=2";
+            ticketClass === '1. třída'
+              ? 'https://fcbazanti.onrender.com/ticket.html?class=1'
+              : 'https://fcbazanti.onrender.com/ticket.html?class=2';
 
-          const qrData = await QRCode.toDataURL(redirectUrl);
-          console.log("🟩 QR kód úspěšně vygenerován");
+          const qrData = await QRCode.toDataURL(encodeURI(redirectUrl));
+          console.log('🟩 QR kód úspěšně vygenerován');
+
 
           // === PDF s QR ===
           // === PDF s QR ===
@@ -125,5 +127,6 @@ export default function registerStripeWebhook(app) {
     }
   );
 }
+
 
 
