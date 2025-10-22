@@ -1,124 +1,196 @@
 import express from "express";
-import bodyParser from "body-parser";
-import Stripe from "stripe";
-import QRCode from "qrcode";
-import fs from "fs";
+import session from "express-session";
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
 import path from "path";
+import helmet from "helmet";
 import dotenv from "dotenv";
-import { PDFDocument } from "pdf-lib";
-import fontkit from "fontkit"; // 🔤 přidáno pro vlastní fonty
+import { fileURLToPath } from "url";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import { Resend } from "resend";
+import registerStripeWebhook from "./stripe-webhook.js"; // ✅ náš Stripe webhook
 
 dotenv.config();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = process.env.PORT || 8080;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "bazant";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export default function registerStripeWebhook(app) {
-  // ✅ Webhook musí mít raw body parser
-  app.post(
-    "/api/stripe/webhook",
-    bodyParser.raw({ type: "application/json" }),
-    async (req, res) => {
-      console.log("💬 Stripe webhook request přišel");
+// ⚙️ Registrace webhooku hned na začátku
+registerStripeWebhook(app);
 
-      const sig = req.headers["stripe-signature"];
-      let event;
+// ✅ Middleware
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-        console.log("📦 Stripe event typ:", event.type);
-      } catch (err) {
-        console.error("❌ Stripe webhook error:", err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-      }
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change_me",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 8 }, // 8 hodin
+  })
+);
 
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-        const email = session.customer_details?.email || "neznamy@uzivatel.cz";
-        const ticketClass = session.metadata?.class || "neznámá třída";
+app.use(express.static(path.join(__dirname, "public")));
 
-        console.log(`✅ Platba dokončena pro ${email} (${ticketClass})`);
+// === DB ===
+let db;
+(async () => {
+  db = await open({
+    filename: path.join(__dirname, "db.sqlite"),
+    driver: sqlite3.Database,
+  });
 
-        try {
-          // === QR kód ===
-          const redirectUrl =
-            ticketClass === "1. třída"
-              ? "https://fcbazanti.onrender.com/ticket.html?class=1"
-              : "https://fcbazanti.onrender.com/ticket.html?class=2";
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS reservations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      class TEXT NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
-          const qrData = await QRCode.toDataURL(redirectUrl);
-          console.log("🟩 QR kód úspěšně vygenerován");
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS matches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      date TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
-          // === PDF s QR ===
-          const pdfDoc = await PDFDocument.create();
-          pdfDoc.registerFontkit(fontkit); // ✅ registrace fontkitu
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS news (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      text TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+})();
 
-          // Načtení vlastního fontu z public/fonts
-          const fontPath = path.join(process.cwd(), "public", "fonts", "DejaVuSans.ttf");
-          const fontBytes = fs.readFileSync(fontPath);
-          const customFont = await pdfDoc.embedFont(fontBytes);
-
-          const page = pdfDoc.addPage([400, 300]);
-          const { width, height } = page.getSize();
-
-          page.drawText("Vstupenka FC Bažantnice", {
-            x: 50,
-            y: height - 50,
-            size: 16,
-            font: customFont,
-          });
-
-          page.drawText(`Třída: ${ticketClass}`, {
-            x: 50,
-            y: height - 80,
-            size: 12,
-            font: customFont,
-          });
-
-          page.drawText("Platnost: 6 měsíců od zakoupení", {
-            x: 50,
-            y: height - 100,
-            size: 12,
-            font: customFont,
-          });
-
-          // QR kód do PDF
-          const png = Buffer.from(qrData.split(",")[1], "base64");
-          const qrImage = await pdfDoc.embedPng(png);
-          page.drawImage(qrImage, { x: 120, y: 80, width: 150, height: 150 });
-
-          const pdfBytes = await pdfDoc.save();
-          const pdfPath = path.join("./", `ticket_${Date.now()}.pdf`);
-          fs.writeFileSync(pdfPath, pdfBytes);
-          console.log("🧾 PDF vstupenka vytvořena:", pdfPath);
-
-          // === Odeslání e-mailu přes RESEND ===
-          const sendResult = await resend.emails.send({
-            from: process.env.RESEND_FROM,
-            to: email,
-            subject: "Vaše vstupenka FC Bažantnice",
-            text: `Děkujeme za nákup! V příloze najdete svou vstupenku (${ticketClass}).`,
-            attachments: [
-              {
-                filename: "vstupenka.pdf",
-                content: pdfBytes.toString("base64"),
-              },
-            ],
-          });
-
-          console.log("📧 E-mail odeslán přes Resend:", sendResult?.id || sendResult);
-          fs.unlinkSync(pdfPath);
-          console.log("🧹 Dočasný PDF soubor odstraněn");
-        } catch (error) {
-          console.error("❌ Chyba při generování nebo odesílání e-mailu:", error);
-        }
-      }
-
-      // ✅ Stripe očekává odpověď vždy
-      res.json({ received: true });
-      console.log("✅ Webhook dokončen a Stripe potvrzen (200 OK)");
-    }
-  );
+// === Helpers ===
+function requireAdmin(req, res, next) {
+  if (req.session?.isAdmin) return next();
+  res.status(401).json({ ok: false, error: "Nejste přihlášen/a." });
 }
+
+// === Admin login/logout ===
+app.post("/api/admin/login", (req, res) => {
+  if (req.body.password === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ ok: false, error: "Špatné heslo." });
+});
+
+app.post("/api/admin/logout", (req, res) =>
+  req.session.destroy(() => res.json({ ok: true }))
+);
+
+// === Rezervace ===
+app.post("/api/book", async (req, res) => {
+  try {
+    const { class: selectedClass, name, email } = req.body;
+
+    if (!selectedClass || !name || !email) {
+      return res.status(400).json({ ok: false, error: "Vyplňte třídu, jméno i e-mail." });
+    }
+
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(email)) {
+      return res.status(400).json({ ok: false, error: "Zadejte platný e-mail." });
+    }
+
+    const stmt = await db.run(
+      "INSERT INTO reservations (class, name, email) VALUES (?, ?, ?)",
+      [selectedClass.trim(), name.trim(), email.trim().toLowerCase()]
+    );
+
+    console.log("✅ Rezervace uložena – ID:", stmt.lastID);
+
+    // Po uložení pošli potvrzovací e-mail
+    await resend.emails.send({
+      from: process.env.RESEND_FROM,
+      to: email,
+      subject: "Potvrzení rezervace",
+      html: `<p>Děkujeme, ${name}, vaše rezervace pro třídu <b>${selectedClass}</b> byla přijata.</p>`,
+    });
+
+    res.status(200).json({ ok: true, id: stmt.lastID });
+  } catch (e) {
+    console.error("❌ CHYBA API /api/book:", e.message);
+    res.status(500).json({ ok: false, error: "Chyba na serveru při ukládání rezervace." });
+  }
+});
+
+// === Admin: rezervace ===
+app.get("/api/reservations", requireAdmin, async (_, res) =>
+  res.json({
+    ok: true,
+    reservations: await db.all(
+      "SELECT * FROM reservations ORDER BY created_at DESC"
+    ),
+  })
+);
+
+app.delete("/api/reservations/:id", requireAdmin, async (req, res) => {
+  await db.run("DELETE FROM reservations WHERE id=?", [req.params.id]);
+  res.json({ ok: true });
+});
+
+// === Zápasy + kalendář ===
+app.post("/api/matches", requireAdmin, async (req, res) => {
+  const { title, date } = req.body;
+  if (!title || !date)
+    return res.json({ ok: false, error: "Vyplňte název a datum." });
+  await db.run("INSERT INTO matches (title, date) VALUES (?, ?)", [
+    title.trim(),
+    date,
+  ]);
+  res.json({ ok: true });
+});
+
+app.get("/api/matches", async (req, res) => {
+  const { year, month } = req.query;
+  if (year && month) {
+    const start = `${year}-${String(month).padStart(2, "0")}-01`;
+    const end = `${year}-${String(Number(month) + 1).padStart(2, "0")}-01`;
+    const rows = await db.all(
+      "SELECT * FROM matches WHERE date >= ? AND date < ?",
+      [start, end]
+    );
+    return res.json({ ok: true, matches: rows });
+  }
+  const rows = await db.all("SELECT * FROM matches ORDER BY date DESC");
+  res.json({ ok: true, matches: rows });
+});
+
+app.delete("/api/matches/:id", requireAdmin, async (req, res) => {
+  await db.run("DELETE FROM matches WHERE id=?", [req.params.id]);
+  res.json({ ok: true });
+});
+
+// === Novinky ===
+app.get("/api/news", async (_, res) =>
+  res.json({ ok: true, news: await db.all("SELECT * FROM news ORDER BY created_at DESC") })
+);
+
+app.post("/api/news", requireAdmin, async (req, res) => {
+  if (!req.body.text) return res.json({ ok: false, error: "Zadejte text." });
+  await db.run("INSERT INTO news (text) VALUES (?)", [req.body.text]);
+  res.json({ ok: true });
+});
+
+app.delete("/api/news/:id", requireAdmin, async (req, res) => {
+  await db.run("DELETE FROM news WHERE id=?", [req.params.id]);
+  res.json({ ok: true });
+});
+
+app.listen(PORT, () => console.log(`✅ Server běží na http://localhost:${PORT}`));
