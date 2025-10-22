@@ -6,8 +6,8 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { PDFDocument } from 'pdf-lib';
-import { Resend } from 'resend';
 import fontkit from '@pdf-lib/fontkit';
+import { Resend } from 'resend';
 
 dotenv.config();
 
@@ -16,7 +16,6 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default function registerStripeWebhook(app) {
-  // ✅ Webhook musí mít raw body parser
   app.post(
     '/api/stripe/webhook',
     bodyParser.raw({ type: 'application/json' }),
@@ -48,71 +47,58 @@ export default function registerStripeWebhook(app) {
               ? 'https://fcbazanti.onrender.com/ticket.html?class=1'
               : 'https://fcbazanti.onrender.com/ticket.html?class=2';
 
-          const qrData = await QRCode.toDataURL(encodeURI(redirectUrl));
+          const qrData = await QRCode.toDataURL(redirectUrl);
           console.log('🟩 QR kód úspěšně vygenerován');
 
-          // === PDF s QR ===
+          // === PDF jen s nadpisem a QR ===
           const pdfDoc = await PDFDocument.create();
           pdfDoc.registerFontkit(fontkit);
 
-          // 🔤 Načtení fontu z public složky
           const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Roboto-Regular.ttf');
           const fontBytes = fs.readFileSync(fontPath);
           const customFont = await pdfDoc.embedFont(fontBytes);
 
           const page = pdfDoc.addPage([400, 300]);
-          const { width, height } = page.getSize();
+          const { height } = page.getSize();
 
           page.drawText('Vstupenka FC Bažantnice', {
             x: 50,
-            y: height - 50,
+            y: height - 60,
             size: 16,
             font: customFont,
           });
 
-          page.drawText(`Třída: ${ticketClass}`, {
-            x: 50,
-            y: height - 80,
-            size: 12,
-            font: customFont,
-          });
-
-          page.drawText('Platnost: 6 měsíců od zakoupení', {
-            x: 50,
-            y: height - 100,
-            size: 12,
-            font: customFont,
-          });
-
-          // QR obrázek
           const png = Buffer.from(qrData.split(',')[1], 'base64');
           const qrImage = await pdfDoc.embedPng(png);
           page.drawImage(qrImage, { x: 120, y: 80, width: 150, height: 150 });
 
           const pdfBytes = await pdfDoc.save();
+          const pdfPath = path.join('./', `ticket_${Date.now()}.pdf`);
+          fs.writeFileSync(pdfPath, pdfBytes);
+          console.log('🧾 PDF vstupenka vytvořena:', pdfPath);
 
-          // === Odeslání e-mailu přes RESEND ===
+          // === Odeslání e-mailu ===
           const sendResult = await resend.emails.send({
             from: process.env.RESEND_FROM,
             to: email,
             subject: 'Vaše vstupenka FC Bažantnice',
-            text: `Děkujeme za nákup! V příloze najdete svou vstupenku (${ticketClass}).`,
+            text: 'Děkujeme za nákup! V příloze najdete svou vstupenku.',
             attachments: [
               {
                 filename: 'vstupenka.pdf',
-                content: Buffer.from(pdfBytes).toString('base64'), // ✅ Base64 fix
+                content: pdfBytes.toString('base64'),
               },
             ],
           });
 
           console.log('📧 E-mail odeslán přes Resend:', sendResult?.id || sendResult);
-          console.log('✅ PDF vstupenka úspěšně vytvořena a odeslána');
+          fs.unlinkSync(pdfPath);
+          console.log('🧹 Dočasný PDF soubor odstraněn');
         } catch (error) {
           console.error('❌ Chyba při generování nebo odesílání e-mailu:', error);
         }
       }
 
-      // ✅ Stripe očekává odpověď vždy
       res.json({ received: true });
       console.log('✅ Webhook dokončen a Stripe potvrzen (200 OK)');
     }
