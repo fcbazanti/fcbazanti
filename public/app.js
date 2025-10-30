@@ -98,16 +98,12 @@ if (form) {
   });
 }
 
-// === Veřejný kalendář – AKTUÁLNÍ měsíc (upraveno na nový endpoint) ===
+// === Veřejný kalendář – všechny zápasy ===
 const upcomingBox = document.getElementById('upcoming');
 if (upcomingBox) {
   (async () => {
     try {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1; // 1–12
-
-      const res = await fetch(`/api/matches?year=${year}&month=${month}`);
+      const res = await fetch(`/api/matches`);
       const j = await res.json();
 
       if (!j.ok) {
@@ -115,7 +111,7 @@ if (upcomingBox) {
         return;
       }
       if (!j.matches.length) {
-        upcomingBox.innerHTML = '<div class="notice">Zatím žádné zápasy pro tento měsíc.</div>';
+        upcomingBox.innerHTML = '<div class="notice">Zatím žádné zápasy.</div>';
         return;
       }
 
@@ -124,7 +120,7 @@ if (upcomingBox) {
         const d = new Date(m.date + 'T00:00:00');
         const item = document.createElement('div');
         item.className = 'card';
-        item.innerHTML = `<strong>${d.toLocaleDateString('cs-CZ')}</strong><br>${m.title}`;
+        item.innerHTML = `<strong>${d.toLocaleDateString('cs-CZ')}</strong> ${m.time ? m.time : ''}<br>${m.title}`;
         upcomingBox.appendChild(item);
       });
 
@@ -144,7 +140,7 @@ if (loginBtn) {
   const matchTbody = document.querySelector('#matchTable tbody');
   const mMsg = document.getElementById('mMsg');
 
-  // --- NOVINKY: prvky (pokud existují v admin.html) ---
+  // --- NOVINKY: prvky ---
   const newsMsg = document.getElementById('newsMsg');
   const newsTbody = document.querySelector('#newsTable tbody');
   const newsText = document.getElementById('nText');
@@ -187,6 +183,7 @@ if (loginBtn) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${d.toLocaleDateString('cs-CZ')}</td>
+        <td>${m.time || '-'}</td>
         <td>${m.title}</td>
         <td><button data-id="${m.id}" class="secondary del-match">Smazat</button></td>
       `;
@@ -196,7 +193,7 @@ if (loginBtn) {
 
   // --- NOVINKY: načtení ---
   async function loadNews() {
-    if (!newsTbody) return; // admin.html ještě nemusí mít sekci Novinky
+    if (!newsTbody) return;
     const res = await fetch('/api/news');
     const j = await res.json();
     if (!j.ok) {
@@ -277,11 +274,12 @@ if (loginBtn) {
 
     const title = document.getElementById('mTitle').value;
     const date = document.getElementById('mDate').value;
+    const time = document.getElementById('mTime').value;
 
     const res = await fetch('/api/matches', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, date })
+      body: JSON.stringify({ title, date, time })
     });
 
     const j = await res.json();
@@ -294,7 +292,7 @@ if (loginBtn) {
     }
   });
 
-  // --- NOVINKY: přidání (pokud v HTML existuje tlačítko) ---
+  // --- NOVINKY: přidání ---
   if (addNewsBtn) {
     addNewsBtn.addEventListener('click', async (e) => {
       e.preventDefault();
@@ -317,7 +315,8 @@ if (loginBtn) {
     });
   }
 }
-// === Veřejné zobrazení novinek (hlavní stránka) ===
+
+// === Veřejné zobrazení novinek ===
 const newsBox = document.getElementById('newsBox');
 if (newsBox) {
   (async () => {
@@ -349,4 +348,3 @@ if (newsBox) {
     }
   })();
 }
-
