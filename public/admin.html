@@ -43,7 +43,7 @@
           <div class="col card" style="padding:16px;">
             <h3>Kalendář zápasů</h3>
             <div id="mMsg"></div>
-            <form id="matchForm" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-items:end;">
+            <form id="matchForm" style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:10px; align-items:end;">
               <div>
                 <label for="mTitle">Název zápasu</label>
                 <input id="mTitle" placeholder="FC Bažantnice vs. XYZ" required/>
@@ -52,8 +52,13 @@
                 <label for="mDate">Datum</label>
                 <input id="mDate" type="date" required />
               </div>
-              <button type="submit">Přidat zápas</button>
-            </form>
+              <div>
+                <label for="mTime">Čas</label>
+                <input id="mTime" type="time" required />
+            </div>
+            <button type="submit">Přidat zápas</button>
+          </form>
+
             <table class="table" id="matchTable" style="margin-top:10px;">
               <thead><tr><th>Datum</th><th>Název</th><th></th></tr></thead>
               <tbody></tbody>
