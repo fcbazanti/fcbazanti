@@ -41,7 +41,7 @@ export default function registerStripeWebhook(app) {
         console.log(`✅ Platba dokončena pro ${email} (${ticketClass})`);
 
         try {
-          // === QR kód ===
+          // URL pro QR
           const redirectUrl =
             ticketClass === '1. třída'
               ? 'https://fcbazanti.onrender.com/ticket.html?class=1'
@@ -50,7 +50,7 @@ export default function registerStripeWebhook(app) {
           const qrData = await QRCode.toDataURL(redirectUrl);
           console.log('🟩 QR kód úspěšně vygenerován');
 
-          // === PDF jen s nadpisem a QR ===
+          // PDF s nadpisem + QR
           const pdfDoc = await PDFDocument.create();
           pdfDoc.registerFontkit(fontkit);
 
@@ -72,28 +72,30 @@ export default function registerStripeWebhook(app) {
           const qrImage = await pdfDoc.embedPng(png);
           page.drawImage(qrImage, { x: 120, y: 80, width: 150, height: 150 });
 
-          const pdfBytes = await pdfDoc.save();
-          const pdfPath = path.join('./', `ticket_${Date.now()}.pdf`);
-          fs.writeFileSync(pdfPath, pdfBytes);
-          console.log('🧾 PDF vstupenka vytvořena:', pdfPath);
+          const pdfBytes = await pdfDoc.save(); // Uint8Array
 
-          // === Odeslání e-mailu ===
+          // 🔧 KLÍČOVÁ OPRAVA – převést na base64 správně
+          const attachmentBase64 = Buffer.from(pdfBytes).toString('base64');
+
+          // (volitelné) soubor na disk pro logování
+          // fs.writeFileSync(`ticket_${Date.now()}.pdf`, pdfBytes);
+
+          // Odeslání e-mailu přes Resend
           const sendResult = await resend.emails.send({
-            from: process.env.RESEND_FROM,
+            from: process.env.RESEND_FROM, // např. "FC Bažantnice <info@fcbazantnice.online>"
             to: email,
             subject: 'Vaše vstupenka FC Bažantnice',
             text: 'Děkujeme za nákup! V příloze najdete svou vstupenku.',
             attachments: [
               {
                 filename: 'vstupenka.pdf',
-                content: pdfBytes.toString('base64'),
+                content: attachmentBase64,
+                contentType: 'application/pdf',
               },
             ],
           });
 
           console.log('📧 E-mail odeslán přes Resend:', sendResult?.id || sendResult);
-          fs.unlinkSync(pdfPath);
-          console.log('🧹 Dočasný PDF soubor odstraněn');
         } catch (error) {
           console.error('❌ Chyba při generování nebo odesílání e-mailu:', error);
         }
