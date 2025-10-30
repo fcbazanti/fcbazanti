@@ -8,7 +8,7 @@ import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { Resend } from "resend";
-import registerStripeWebhook from "./stripe-webhook.js"; // ✅ náš Stripe webhook
+import registerStripeWebhook from "./stripe-webhook.js";
 
 dotenv.config();
 
@@ -20,10 +20,8 @@ const PORT = process.env.PORT || 8080;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "bazant";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ⚙️ Registrace webhooku hned na začátku
 registerStripeWebhook(app);
 
-// ✅ Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,7 +31,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "change_me",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 8 }, // 8 hodin
+    cookie: { maxAge: 1000 * 60 * 60 * 8 },
   })
 );
 
@@ -62,6 +60,7 @@ let db;
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       date TEXT NOT NULL,
+      time TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -147,28 +146,19 @@ app.delete("/api/reservations/:id", requireAdmin, async (req, res) => {
 
 // === Zápasy + kalendář ===
 app.post("/api/matches", requireAdmin, async (req, res) => {
-  const { title, date } = req.body;
-  if (!title || !date)
-    return res.json({ ok: false, error: "Vyplňte název a datum." });
-  await db.run("INSERT INTO matches (title, date) VALUES (?, ?)", [
+  const { title, date, time } = req.body;
+  if (!title || !date || !time)
+    return res.json({ ok: false, error: "Vyplňte název, datum a čas." });
+  await db.run("INSERT INTO matches (title, date, time) VALUES (?, ?, ?)", [
     title.trim(),
     date,
+    time,
   ]);
   res.json({ ok: true });
 });
 
 app.get("/api/matches", async (req, res) => {
-  const { year, month } = req.query;
-  if (year && month) {
-    const start = `${year}-${String(month).padStart(2, "0")}-01`;
-    const end = `${year}-${String(Number(month) + 1).padStart(2, "0")}-01`;
-    const rows = await db.all(
-      "SELECT * FROM matches WHERE date >= ? AND date < ?",
-      [start, end]
-    );
-    return res.json({ ok: true, matches: rows });
-  }
-  const rows = await db.all("SELECT * FROM matches ORDER BY date DESC");
+  const rows = await db.all("SELECT * FROM matches ORDER BY date ASC");
   res.json({ ok: true, matches: rows });
 });
 
