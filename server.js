@@ -5,151 +5,160 @@ import path from 'path';
 import helmet from 'helmet';
 import bodyParser from 'body-parser';
 import Stripe from 'stripe';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
 import fs from 'fs';
+import { Resend } from 'resend';
 import registerStripeWebhook from './stripe-webhook.js';
+import pkg from 'pg';
+const { Pool } = pkg;
 
 dotenv.config();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = express();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const __dirname = path.resolve();
 
-// 📁 TRVALÉ ÚLOŽIŠTĚ SQLite
-// 📁 TRVALÉ ÚLOŽIŠTĚ SQLite (Render safe)
-const dbDir = path.join(process.cwd(), 'data');
-const dbPath = path.join(dbDir, 'database.sqlite');
-if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
-
-
-const db = await open({
-  filename: dbPath,
-  driver: sqlite3.Database,
+// === PostgreSQL (Neon) ===
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-// 🧱 Tabulky
-await db.exec(`
-  CREATE TABLE IF NOT EXISTS reservations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    class TEXT,
-    name TEXT,
-    email TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
+// === Inicializace tabulek ===
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reservations (
+      id SERIAL PRIMARY KEY,
+      class TEXT,
+      name TEXT,
+      email TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS matches (
+      id SERIAL PRIMARY KEY,
+      title TEXT,
+      date DATE
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS news (
+      id SERIAL PRIMARY KEY,
+      text TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  console.log('✅ PostgreSQL tabulky inicializovány');
+}
+initDB();
 
-  CREATE TABLE IF NOT EXISTS matches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    date TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS news (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    text TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-
-// 🧠 Middleware
+// === Middleware ===
 app.use(helmet());
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'tajneheslo123',
+    secret: process.env.SESSION_SECRET || 'tajneheslo',
     resave: false,
     saveUninitialized: false,
   })
 );
 
-// 🗂️ Statické soubory
-app.use(express.static('public'));
-
-// 🧩 Stripe webhook
-registerStripeWebhook(app);
-
-// === API ENDPOINTY ===
-
-// 💬 Rezervace
+// === API: Rezervace ===
 app.post('/api/book', async (req, res) => {
-  const { class: cls, name, email } = req.body;
-  if (!cls || !name || !email)
-    return res.json({ ok: false, error: 'Chybí údaje.' });
+  try {
+    const { class: cls, name, email } = req.body;
+    if (!cls || !name || !email)
+      return res.json({ ok: false, error: 'Chybí údaje.' });
 
-  const result = await db.run(
-    'INSERT INTO reservations (class, name, email) VALUES (?, ?, ?)',
-    [cls, name, email]
-  );
+    const result = await pool.query(
+      'INSERT INTO reservations (class, name, email) VALUES ($1, $2, $3) RETURNING id',
+      [cls, name, email]
+    );
 
-  res.json({ ok: true, id: result.lastID });
+    res.json({ ok: true, id: result.rows[0].id });
+  } catch (e) {
+    console.error('❌ Chyba při přidávání rezervace:', e);
+    res.json({ ok: false, error: 'Chyba při ukládání.' });
+  }
 });
 
-// 📜 Získání rezervací (admin)
 app.get('/api/reservations', async (req, res) => {
-  const reservations = await db.all('SELECT * FROM reservations ORDER BY id DESC');
-  res.json({ ok: true, reservations });
+  try {
+    const r = await pool.query('SELECT * FROM reservations ORDER BY created_at DESC');
+    res.json({ ok: true, reservations: r.rows });
+  } catch {
+    res.json({ ok: false, error: 'Chyba načtení rezervací.' });
+  }
 });
 
 app.delete('/api/reservations/:id', async (req, res) => {
-  await db.run('DELETE FROM reservations WHERE id = ?', req.params.id);
+  await pool.query('DELETE FROM reservations WHERE id=$1', [req.params.id]);
   res.json({ ok: true });
 });
 
-// 🏟️ Zápasy
-app.get('/api/matches', async (req, res) => {
-  const matches = await db.all('SELECT * FROM matches ORDER BY date DESC');
-  res.json({ ok: true, matches });
-});
-
+// === API: Zápasy ===
 app.post('/api/matches', async (req, res) => {
-  const { title, date } = req.body;
-  if (!title || !date)
-    return res.json({ ok: false, error: 'Chybí údaje.' });
+  try {
+    const { title, date } = req.body;
+    if (!title || !date) return res.json({ ok: false, error: 'Chybí údaje.' });
+    await pool.query('INSERT INTO matches (title, date) VALUES ($1, $2)', [title, date]);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('❌ Chyba zápasu:', e);
+    res.json({ ok: false });
+  }
+});
 
-  await db.run('INSERT INTO matches (title, date) VALUES (?, ?)', [title, date]);
-  res.json({ ok: true });
+app.get('/api/matches', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM matches ORDER BY date');
+    res.json({ ok: true, matches: result.rows });
+  } catch {
+    res.json({ ok: false, error: 'Chyba při načítání zápasů.' });
+  }
 });
 
 app.delete('/api/matches/:id', async (req, res) => {
-  await db.run('DELETE FROM matches WHERE id = ?', req.params.id);
+  await pool.query('DELETE FROM matches WHERE id=$1', [req.params.id]);
   res.json({ ok: true });
 });
 
-// 📰 Novinky
-app.get('/api/news', async (req, res) => {
-  const news = await db.all('SELECT * FROM news ORDER BY created_at DESC');
-  res.json({ ok: true, news });
-});
-
+// === API: Novinky ===
 app.post('/api/news', async (req, res) => {
   const { text } = req.body;
-  if (!text) return res.json({ ok: false, error: 'Chybí text.' });
-  await db.run('INSERT INTO news (text) VALUES (?)', [text]);
+  if (!text) return res.json({ ok: false, error: 'Zadejte text.' });
+  await pool.query('INSERT INTO news (text) VALUES ($1)', [text]);
   res.json({ ok: true });
+});
+
+app.get('/api/news', async (req, res) => {
+  const result = await pool.query('SELECT * FROM news ORDER BY created_at DESC');
+  res.json({ ok: true, news: result.rows });
 });
 
 app.delete('/api/news/:id', async (req, res) => {
-  await db.run('DELETE FROM news WHERE id = ?', req.params.id);
+  await pool.query('DELETE FROM news WHERE id=$1', [req.params.id]);
   res.json({ ok: true });
 });
 
-// 🔒 Admin login
+// === Admin login ===
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   if (password === process.env.ADMIN_PASSWORD) {
-    req.session.isAdmin = true;
+    req.session.admin = true;
     res.json({ ok: true });
-  } else {
-    res.json({ ok: false, error: 'Špatné heslo.' });
-  }
+  } else res.json({ ok: false, error: 'Špatné heslo.' });
 });
 
 app.post('/api/admin/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
-// 🏠 Spuštění
+// === Stripe webhook ===
+registerStripeWebhook(app);
+
+// === Spuštění ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`✅ Server běží na portu ${PORT}`)
-);
+app.listen(PORT, () => console.log(`🚀 Server běží na portu ${PORT}`));
