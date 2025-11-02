@@ -16,9 +16,11 @@ const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // 📁 TRVALÉ ÚLOŽIŠTĚ SQLite
-const dbDir = '/var/data';
+// 📁 TRVALÉ ÚLOŽIŠTĚ SQLite (Render safe)
+const dbDir = path.join(process.cwd(), 'data');
 const dbPath = path.join(dbDir, 'database.sqlite');
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+
 
 const db = await open({
   filename: dbPath,
