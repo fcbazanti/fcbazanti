@@ -1,14 +1,11 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FC Bažantnice</title>
-  <link rel="stylesheet" href="/style.css" />
-  <meta name="description" content="FC Bažantnice – kontakt, ceník, rezervace a kalendář zápasů." />
-
-  <!-- Stripe (JEN JEDNOU) -->
-  <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+  <link rel="stylesheet" href="/style.css">
+  <meta name="description" content="FC Bažantnice – kontakt, ceník, rezervace a kalendář zápasů.">
 </head>
 
 <body>
@@ -16,9 +13,9 @@
 
 <header class="header">
   <img src="/logo.png"
-       onerror="this.src='https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=300&auto=format&fit=crop'"
        alt="FC Bažantnice"
-       class="logo" />
+       class="logo"
+       onerror="this.src='https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=300&auto=format&fit=crop'">
   <div>
     <h1 style="margin:4px 0 2px;">FC Bažantnice</h1>
     <div class="notice">Kontakt • Rezervace • Kalendář • Ceník</div>
@@ -29,7 +26,7 @@
 
 <!-- TABS -->
 <nav class="tabs" id="tabs">
-  <div class="tab" data-tab="uvod">Úvod</div>
+  <div class="tab active" data-tab="uvod">Úvod</div>
   <div class="tab" data-tab="kontakt">Kontakt</div>
   <div class="tab" data-tab="rezervace">Rezervace</div>
   <div class="tab" data-tab="kalendar">Kalendář</div>
@@ -38,68 +35,73 @@
   <a href="/admin.html" class="tab" style="text-decoration:none;">Admin</a>
 </nav>
 
-<!-- ÚVOD -->
+<!-- ================= ÚVOD ================= -->
 <section id="tab-uvod" class="tab-content active">
   <h2>Vítejte</h2>
   <p>
-    Oficiální stránka klubu FC Bažantnice. Sídlíme v Malé Hraštici, kde máme stadion.
-    Pokud byste měli chuť přijít na zápas, kupte nebo zarezervujte si místo.
-    Budeme rádi za vaši podporu.
+    Oficiální stránka klubu FC Bažantnice. Sídlíme v Malé Hraštici,
+    kde máme stadion. Pokud chcete přijít na zápas, budeme rádi za vaši podporu.
   </p>
 
   <div class="grid grid-2" style="margin-top:12px;">
     <img src="/stadium.png" alt="Stadion" style="width:100%; border-radius:12px;">
     <img src="/logo.png" alt="Logo" style="width:100%; border-radius:12px; background:#e2e8f0; padding:12px;">
   </div>
-</section>
 
-<!-- ⭐ PODPORA KLUBU – MIMO TABY -->
-<section style="margin-top:28px;">
-  <h2>❤️ Podpora klubu</h2>
-  <p>Podpořte FC Bažantnice nebo si zakupte klubový časopis.</p>
+  <!-- PODPORA – JEN NA ÚVODU -->
+  <div style="margin-top:32px;">
+    <h3>❤️ Podpora klubu</h3>
+    <p>Podpořte FC Bažantnice nebo si zakupte klubový časopis.</p>
 
-  <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:16px;">
-    <stripe-buy-button
-      buy-button-id="buy_btn_1S3KsYBew8uV3jjD4aCJrSZe"
-      publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
-    </stripe-buy-button>
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      <stripe-buy-button
+        buy-button-id="buy_btn_1S3KsYBew8uV3jjD4aCJrSZe"
+        publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
+      </stripe-buy-button>
 
-    <stripe-buy-button
-      buy-button-id="buy_btn_1S4JMNBew8uV3jjDLDRQpgAC"
-      publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
-    </stripe-buy-button>
+      <stripe-buy-button
+        buy-button-id="buy_btn_1S4JMNBew8uV3jjDLDRQpgAC"
+        publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
+      </stripe-buy-button>
+    </div>
   </div>
 </section>
 
-<!-- KONTAKT -->
+<!-- ================= KONTAKT ================= -->
 <section id="tab-kontakt" class="tab-content">
   <h2>Kontakt</h2>
-  <div class="grid grid-2">
+
+  <div class="grid grid-2" style="margin-top:12px;">
     <div>
       <strong>FC Bažantnice</strong><br>
       Malá Hraštice 324<br>
       Tel.: <a href="tel:+420605489105">+420 605 489 105</a><br>
       E-mail: <a href="mailto:fcbazantnice@gmail.com">fcbazantnice@gmail.com</a>
     </div>
-    <iframe style="width:100%; height:300px; border:0; border-radius:12px;"
-            loading="lazy"
-            src="https://www.google.com/maps?q=Mal%C3%A1%20Hra%C5%A1tice%20324&output=embed"></iframe>
+
+    <iframe
+      style="width:100%; height:300px; border:0; border-radius:12px;"
+      loading="lazy"
+      src="https://www.google.com/maps?q=Mal%C3%A1%20Hra%C5%A1tice%20324&output=embed">
+    </iframe>
   </div>
 </section>
 
-<!-- REZERVACE -->
+<!-- ================= REZERVACE ================= -->
 <section id="tab-rezervace" class="tab-content">
   <h2>Rezervace</h2>
-  <p class="notice">Rezervace platí 6 měsíců.</p>
+  <p class="notice">
+    Rezervace je platná 6 měsíců a lze ji uplatnit na libovolný zápas.
+  </p>
 </section>
 
-<!-- KALENDÁŘ -->
+<!-- ================= KALENDÁŘ ================= -->
 <section id="tab-kalendar" class="tab-content">
   <h2>Kalendář</h2>
   <p class="notice">Zde budou plánované zápasy.</p>
 </section>
 
-<!-- CENÍK – BEZE ZMĚN -->
+<!-- ================= CENÍK ================= -->
 <section id="tab-cenik" class="tab-content">
   <h2>Ceník tříd</h2>
 
@@ -120,7 +122,7 @@
     <li>Sleva až 20 % do fanshopu</li>
     <li>Setkání s hráči</li>
     <li>Nejlepší výhled</li>
-    <li>Možnost platit kartou</li>
+    <li>Možnost platby kartou</li>
     <li>Cereálie, ovoce, pečivo</li>
     <li>Šťáva, mošt</li>
   </ul>
@@ -128,17 +130,17 @@
   <h3>2. třída</h3>
   <ul>
     <li>Dobrý výhled</li>
-    <li>Možnost platit kartou</li>
+    <li>Možnost platby kartou</li>
     <li>Cereálie, ovoce, šťáva</li>
   </ul>
 
-  <p>Ve všech třídách je voda. Ve 3. třídě není nic dalšího.</p>
+  <p>Ve všech třídách je zajištěna voda. Ve 3. třídě není nic dalšího.</p>
 </section>
 
-<!-- NOVINKY -->
+<!-- ================= NOVINKY ================= -->
 <section id="tab-novinky" class="tab-content">
   <h2>Novinky</h2>
-  <p>Zde se zobrazí novinky.</p>
+  <div id="newsBox"></div>
 </section>
 
 </div>
@@ -149,6 +151,9 @@
 
 </div>
 
+<!-- Stripe MUSÍ být až po DOM -->
+<script src="https://js.stripe.com/v3/buy-button.js"></script>
 <script src="/app.js"></script>
+
 </body>
 </html>
