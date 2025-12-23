@@ -3,166 +3,152 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FC Bažantnice – Kontakt & Rezervace</title>
+  <title>FC Bažantnice</title>
   <link rel="stylesheet" href="/style.css" />
-  <meta name="description" content="FC Bažantnice – kontakt, ceník, rezervace a kalendář zápasů na příští měsíc." />
+  <meta name="description" content="FC Bažantnice – kontakt, ceník, rezervace a kalendář zápasů." />
+
+  <!-- Stripe (JEN JEDNOU) -->
+  <script async src="https://js.stripe.com/v3/buy-button.js"></script>
 </head>
+
 <body>
-  <div class="container">
-    <header class="header">
-      <img src="/logo.png" onerror="this.src='https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=300&auto=format&fit=crop'" alt="FC Bažantnice" class="logo" />
-      <div>
-        <h1 style="margin:4px 0 2px;">FC Bažantnice</h1>
-        <div class="notice">Kontakt • Rezervace • Kalendář • Ceník</div>
-      </div>
-    </header>
+<div class="container">
 
-    <div class="card" style="margin-top:16px;">
-      <nav class="tabs" id="tabs">
-        <div class="tab active" data-tab="uvod">Úvod</div>
-        <div class="tab" data-tab="kontakt">Kontakt</div>
-        <div class="tab" data-tab="rezervace">Rezervace</div>
-        <div class="tab" data-tab="kalendar">Kalendář</div>
-        <div class="tab" data-tab="cenik">Ceník</div>
-        <div class="tab" data-tab="novinky">Novinky</div>
-        <a href="/admin.html" class="tab" style="text-decoration:none;">Admin</a>
-      </nav>
-
-      <section id="tab-uvod" class="tab-content active">
-        <h2>Vítejte</h2>
-        <p>Oficiální stránka klubu FC Bažantnice. Sídlíme v Malé Hraštici, kde máme stadion. Pokud byste měli chuť a čas přijít se podívat na zápas, kupte nebo zarezervujte si místo. Naším cílem je vydělat na dresy, proto se určitě nebojte nás <strong>podpořit.</strong> Pokud nás chcete podpořit v tvorbě nebo zakoupit časopis, sjeďte na této záložce o trochu níže. </p>
-
-        <div class="grid grid-2" style="margin-top:12px;">
-          <img src="/stadium.png" alt="Stadion" style="width:100%; border-radius:12px;"/>
-          <img src="/logo.png" alt="Logo" style="width:100%; border-radius:12px; background:#e2e8f0; padding:12px;"/>
-
-          <!-- Stripe tlačítka -->
-          <script async
-            src="https://js.stripe.com/v3/buy-button.js">
-          </script>
-
-          <stripe-buy-button
-            buy-button-id="buy_btn_1S3KsYBew8uV3jjD4aCJrSZe"
-            publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl"
-          >
-          </stripe-buy-button>
-
-          <script async
-            src="https://js.stripe.com/v3/buy-button.js">
-          </script>
-
-          <stripe-buy-button
-            buy-button-id="buy_btn_1S4JMNBew8uV3jjDLDRQpgAC"
-            publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl"
-          >
-          </stripe-buy-button>
-        </div>
-      </section>
-
-      <section id="tab-kontakt" class="tab-content">
-        <h2>Kontakt</h2>
-        <div class="grid grid-2" style="margin-top:12px;">
-          <div>
-            <h3 style="margin:0 0 6px;">FC Bažantnice</h3>
-            <div>Malá Hraštice 324, ČR</div>
-            <div style="margin-top:6px;">Tel.: <a href="tel:+420605489105">+420 605 489 105</a></div>
-            <div>E-mail: <a href="mailto:fcbazantnice@gmail.com">fcbazantnice@gmail.com</a></div>
-          </div>
-          <div style="position:relative; overflow:hidden; border-radius:12px;">
-            <iframe style="width:100%; height:300px; border:0;" loading="lazy" allowfullscreen
-                    referrerpolicy="no-referrer-when-downgrade"
-                    src="https://www.google.com/maps?q=Mal%C3%A1%20Hra%C5%A1tice%20324%2C%20%C4%8CR&output=embed"></iframe>
-          </div>
-        </div>
-      </section>
-
-      <section id="tab-rezervace" class="tab-content">
-        <h2>Rezervace</h2>
-        <p class="notice">Rezervace je vždy na jeden libovolný zápas a můžete ji uplatnit 6 měsícu po zakoupení. </p>
-        <div id="msg"></div>
-        <form id="bookForm">
-          <div class="grid grid-2">
-            <div>
-              <label for="class">Třída</label>
-              <select id="class" name="class" required>
-                <option value="1. třída">1. třída (80 Kč za zápas)</option>
-                <option value="2. třída">2. třída (35 Kč za zápas)</option>
-                <option value="3. třída">3. třída (20 Kč za zápas)</option>
-              </select>
-              <div id="priceHint" class="notice" style="margin-top:6px;"></div>
-            </div>
-            <div>
-              <label for="name">Jméno</label>
-              <input id="name" name="name" placeholder="Jan Novák" required />
-            </div>
-          </div>
-          <label for="email">E-mail</label>
-          <input id="email" name="email" placeholder="jan.novak@example.com" required type="email" />
-
-          <div style="display:flex; gap:10px; margin-top:12px;">
-            <button type="submit">Odeslat rezervaci</button>
-          </div>
-        </form>
-      </section>
-
-      <section id="tab-kalendar" class="tab-content">
-        <h2>Kalendář – příští měsíc</h2>
-        <div id="upcoming" class="grid" style="gap:8px;"></div>
-        <p class="notice">Zde budou zobrazeny plánované zápasy a akce.</p>
-      </section>
-
-      <section id="tab-cenik" class="tab-content">
-        <h2>Ceník tříd</h2>
-        <table class="table">
-          <thead>
-            <tr><th>Třída</th><th>Na zápas</th><th>Permanentka</th></tr>
-          </thead>
-          <tbody>
-            <tr><td><span class="badge">1. třída</span></td><td>80 Kč</td><td>1000 Kč</td></tr>
-            <tr><td><span class="badge">2. třída</span></td><td>35 Kč</td><td>500 Kč</td></tr>
-            <tr><td><span class="badge">3. třída</span></td><td>20 Kč</td><td>250 Kč</td></tr>
-          </tbody>
-        </table>
-        <h3>1. Třída</h3>
-
-          <ul>
-            <li>Pohodlnější místa</li>
-            <li>Sleva do až 20% do fanshoppu</li>
-            <li>Setkání s hráči</li>
-            <li>Nejlepsší výhled</li>
-            <li>Možnost platit kartou</li>
-            <li>Cereálie</li>
-            <li>Ovoce, zenina</li>
-            <li>Pečivo</li>
-            <li>Občas dezertt</li>
-            <li>Šťáva</li>
-            <li>Mošt</li>
-        </ul>
-        <h3>2. Třída</h3>
-        
-        <ul>
-          <li>"Placák s hráči"</li>
-          <li>Dobrý výhled</li>
-          <li>Možnost platit kartou</li>
-          <li>Cereálie</li>
-          <li>Ovoce, zenina</li>
-          <li>Šťáva</li>
-        </ul>
-        <p>Ve všech třídách je zajištěna voda, v 3. tříde není nic jiného.</p>
-      </section>
-
-      <!-- 🆕 NOVÁ SEKCE NOVINKY -->
-      <section id="tab-novinky" class="tab-content">
-        <h2>Novinky</h2>
-        <div id="newsBox" class="grid" style="gap:8px;"></div>
-        <p class="notice">Zde se zobrazí novinky přidané z admin sekce.</p>
-      </section>
-
-    </div>
-
-    <footer class="footer">© <span id="year"></span> FC Bažantnice • <a href="/admin.html">Administrace</a></footer>
+<header class="header">
+  <img src="/logo.png"
+       onerror="this.src='https://images.unsplash.com/photo-1518091043644-c1d4457512c6?q=80&w=300&auto=format&fit=crop'"
+       alt="FC Bažantnice"
+       class="logo" />
+  <div>
+    <h1 style="margin:4px 0 2px;">FC Bažantnice</h1>
+    <div class="notice">Kontakt • Rezervace • Kalendář • Ceník</div>
   </div>
+</header>
 
-  <script src="/app.js"></script>
+<div class="card" style="margin-top:16px;">
+
+<!-- TABS -->
+<nav class="tabs" id="tabs">
+  <div class="tab active" data-tab="uvod">Úvod</div>
+  <div class="tab" data-tab="kontakt">Kontakt</div>
+  <div class="tab" data-tab="rezervace">Rezervace</div>
+  <div class="tab" data-tab="kalendar">Kalendář</div>
+  <div class="tab" data-tab="cenik">Ceník</div>
+  <div class="tab" data-tab="novinky">Novinky</div>
+  <a href="/admin.html" class="tab" style="text-decoration:none;">Admin</a>
+</nav>
+
+<!-- ÚVOD -->
+<section id="tab-uvod" class="tab-content active">
+  <h2>Vítejte</h2>
+  <p>
+    Oficiální stránka klubu FC Bažantnice. Sídlíme v Malé Hraštici, kde máme stadion.
+    Pokud byste měli chuť přijít na zápas, kupte nebo zarezervujte si místo.
+    Budeme rádi za vaši podporu.
+  </p>
+
+  <div class="grid grid-2" style="margin-top:12px;">
+    <img src="/stadium.png" alt="Stadion" style="width:100%; border-radius:12px;">
+    <img src="/logo.png" alt="Logo" style="width:100%; border-radius:12px; background:#e2e8f0; padding:12px;">
+  </div>
+</section>
+
+<!-- ⭐ PODPORA KLUBU – MIMO TABY -->
+<section style="margin-top:28px;">
+  <h2>❤️ Podpora klubu</h2>
+  <p>Podpořte FC Bažantnice nebo si zakupte klubový časopis.</p>
+
+  <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:16px;">
+    <stripe-buy-button
+      buy-button-id="buy_btn_1S3KsYBew8uV3jjD4aCJrSZe"
+      publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
+    </stripe-buy-button>
+
+    <stripe-buy-button
+      buy-button-id="buy_btn_1S4JMNBew8uV3jjDLDRQpgAC"
+      publishable-key="pk_live_51S1UMUBew8uV3jjDr6w64v48eCC9UxptXzp8EPJ2rIOZjM1hDyREwUG0x9riobyfi7jtceDPnS3RohertNu4SxHV00QoUhEBAl">
+    </stripe-buy-button>
+  </div>
+</section>
+
+<!-- KONTAKT -->
+<section id="tab-kontakt" class="tab-content">
+  <h2>Kontakt</h2>
+  <div class="grid grid-2">
+    <div>
+      <strong>FC Bažantnice</strong><br>
+      Malá Hraštice 324<br>
+      Tel.: <a href="tel:+420605489105">+420 605 489 105</a><br>
+      E-mail: <a href="mailto:fcbazantnice@gmail.com">fcbazantnice@gmail.com</a>
+    </div>
+    <iframe style="width:100%; height:300px; border:0; border-radius:12px;"
+            loading="lazy"
+            src="https://www.google.com/maps?q=Mal%C3%A1%20Hra%C5%A1tice%20324&output=embed"></iframe>
+  </div>
+</section>
+
+<!-- REZERVACE -->
+<section id="tab-rezervace" class="tab-content">
+  <h2>Rezervace</h2>
+  <p class="notice">Rezervace platí 6 měsíců.</p>
+</section>
+
+<!-- KALENDÁŘ -->
+<section id="tab-kalendar" class="tab-content">
+  <h2>Kalendář</h2>
+  <p class="notice">Zde budou plánované zápasy.</p>
+</section>
+
+<!-- CENÍK – BEZE ZMĚN -->
+<section id="tab-cenik" class="tab-content">
+  <h2>Ceník tříd</h2>
+
+  <table class="table">
+    <thead>
+      <tr><th>Třída</th><th>Na zápas</th><th>Permanentka</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1. třída</td><td>80 Kč</td><td>1000 Kč</td></tr>
+      <tr><td>2. třída</td><td>35 Kč</td><td>500 Kč</td></tr>
+      <tr><td>3. třída</td><td>20 Kč</td><td>250 Kč</td></tr>
+    </tbody>
+  </table>
+
+  <h3>1. třída</h3>
+  <ul>
+    <li>Pohodlnější místa</li>
+    <li>Sleva až 20 % do fanshopu</li>
+    <li>Setkání s hráči</li>
+    <li>Nejlepší výhled</li>
+    <li>Možnost platit kartou</li>
+    <li>Cereálie, ovoce, pečivo</li>
+    <li>Šťáva, mošt</li>
+  </ul>
+
+  <h3>2. třída</h3>
+  <ul>
+    <li>Dobrý výhled</li>
+    <li>Možnost platit kartou</li>
+    <li>Cereálie, ovoce, šťáva</li>
+  </ul>
+
+  <p>Ve všech třídách je voda. Ve 3. třídě není nic dalšího.</p>
+</section>
+
+<!-- NOVINKY -->
+<section id="tab-novinky" class="tab-content">
+  <h2>Novinky</h2>
+  <p>Zde se zobrazí novinky.</p>
+</section>
+
+</div>
+
+<footer class="footer">
+  © <span id="year"></span> FC Bažantnice • <a href="/admin.html">Administrace</a>
+</footer>
+
+</div>
+
+<script src="/app.js"></script>
 </body>
 </html>
